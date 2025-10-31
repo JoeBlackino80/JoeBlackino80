@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fakturačný Systém - SZČO Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Fakturačný Systém</h1>
+            <p>Komplexný offline nástroj pre SZČO na Slovensku</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Celkový obrat (2025)</h3>
+                <div class="value">€12,450</div>
+                <div class="change">+15% oproti minulému roku</div>
+            </div>
+            <div class="stat-card">
+                <h3>Vystavené faktúry</h3>
+                <div class="value">23</div>
+                <div class="change">5 neuhradených</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Po splatnosti</h3>
+                <div class="value">3</div>
+                <div class="change">€2,340 celkom</div>
+            </div>
+            <div class="stat-card">
+                <h3>Klienti</h3>
+                <div class="value">12</div>
+                <div class="change">+2 tento mesiac</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Documents -->
+            <div class="panel">
+                <h2>Doklady a Faktúry</h2>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-modal="invoiceModal">
+                        Nová Faktúra
+                    </button>
+                    <button class="btn btn-secondary" data-modal="proformaModal">
+                        Proforma Faktúra
+                    </button>
+                    <button class="btn btn-secondary" data-modal="offerModal">
+                        Cenová Ponuka
+                    </button>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" data-tab="all">Všetky</button>
+                    <button class="tab" data-tab="invoices">Faktúry</button>
+                    <button class="tab" data-tab="overdue">Po splatnosti</button>
+                    <button class="tab" data-tab="paid">Uhradené</button>
+                </div>
+
+                <table class="table" id="documentsTable">
+                    <thead>
+                        <tr>
+                            <th>Číslo</th>
+                            <th>Klient</th>
+                            <th>Dátum</th>
+                            <th>Suma</th>
+                            <th>Status</th>
+                            <th>Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentsBody">
+                        <tr>
+                            <td>2025-0042</td>
+                            <td>ACME s.r.o.</td>
+                            <td>27.10.2025</td>
+                            <td>€1,200.00</td>
+                            <td><span class="badge badge-success">Uhradená</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="view" data-doc="2025-0042">Zobraziť</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2025-0041</td>
+                            <td>Tech Solutions s.r.o.</td>
+                            <td>25.10.2025</td>
+                            <td>€3,500.00</td>
+                            <td><span class="badge badge-warning">Vystavená</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="view" data-doc="2025-0041">Zobraziť</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2025-0040</td>
+                            <td>Digital Marketing s.r.o.</td>
+                            <td>20.10.2025</td>
+                            <td>€850.00</td>
+                            <td><span class="badge badge-danger">Po splatnosti</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="view" data-doc="2025-0040">Zobraziť</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>CP-2025-015</td>
+                            <td>StartUp XYZ</td>
+                            <td>18.10.2025</td>
+                            <td>€5,200.00</td>
+                            <td><span class="badge badge-info">Cenová ponuka</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="convert" data-doc="CP-2025-015">Konvertovať</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Right Panel - Quick Actions & Info -->
+            <div>
+                <div class="panel">
+                    <h2>Rýchle akcie</h2>
+                    <div class="quick-actions">
+                        <div class="quick-action" data-modal="clientModal">
+                            <h4>Pridať klienta</h4>
+                            <p>Nový obchodný partner</p>
+                        </div>
+                        <div class="quick-action" data-modal="itemModal">
+                            <h4>Pridať položku</h4>
+                            <p>Cenník/Služby</p>
+                        </div>
+                        <div class="quick-action" data-modal="expenseModal">
+                            <h4>Evidovať náklad</h4>
+                            <p>Nový výdavok</p>
+                        </div>
+                        <div class="quick-action" data-action="report">
+                            <h4>Reporty</h4>
+                            <p>DPH, Obrat, Export</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 30px;">
+                    <h2>Najnovšie upozornenia</h2>
+                    <div style="margin-top: 20px;">
+                        <div class="alert alert-warning">
+                            <strong>Faktúra 2025-0040</strong><br>
+                            <small>Po splatnosti 7 dní - Digital Marketing s.r.o.</small>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Nízky stav zásob</strong><br>
+                            <small>Položka "Webhosting" - zostáva 2 ks</small>
+                        </div>
+                        <div class="alert alert-success">
+                            <strong>Nová platba</strong><br>
+                            <small>Faktúra 2025-0042 bola uhradená</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - New Invoice -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nová Faktúra</h3>
+                <button class="close-btn" data-close="invoiceModal">&times;</button>
+            </div>
+
+            <form id="invoiceForm">
+                <div class="form-group">
+                    <label>Typ dokladu</label>
+                    <select name="documentType" required>
+                        <option value="FAKTURA">Faktúra</option>
+                        <option value="PROFORMA">Proforma faktúra</option>
+                        <option value="CENOVA_PONUKA">Cenová ponuka</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Klient</label>
+                    <select name="client" required>
+                        <option value="">Vyberte klienta...</option>
+                        <option value="1">ACME s.r.o.</option>
+                        <option value="2">Tech Solutions s.r.o.</option>
+                        <option value="3">Digital Marketing s.r.o.</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dátum vystavenia</label>
+                    <input type="date" name="issueDate" required value="2025-10-27">
+                </div>
+
+                <div class="form-group">
+                    <label>Dátum splatnosti</label>
+                    <input type="date" name="dueDate" required value="2025-11-10">
+                </div>
+
+                <div class="form-group">
+                    <label>Položky faktúry</label>
+                    <div id="invoiceItems">
+                        <div class="item-row">
+                            <select name="item[]">
+                                <option>Vývoj webovej aplikácie</option>
+                                <option>Grafický dizajn</option>
+                                <option>Konzultácie</option>
+                            </select>
+                            <input type="number" name="quantity[]" placeholder="Množstvo" value="20" min="0">
+                            <input type="number" name="price[]" placeholder="Cena/j" value="50.00" step="0.01" min="0">
+                            <select name="vat[]">
+                                <option value="20">20% DPH</option>
+                                <option value="10">10% DPH</option>
+                                <option value="0">0% DPH</option>
+                            </select>
+                            <input type="text" class="item-total" readonly value="1000.00 €">
+                            <button type="button" class="btn btn-danger btn-small remove-item">Odstrániť</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="addItemBtn">Pridať položku</button>
+                </div>
+
+                <div class="invoice-summary">
+                    <div class="summary-row">
+                        <strong>Celkom bez DPH:</strong>
+                        <span id="totalWithoutVat">€1,000.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <strong>DPH (20%):</strong>
+                        <span id="totalVat">€200.00</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <strong>Celkom s DPH:</strong>
+                        <strong id="totalWithVat">€1,200.00</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Úvodný text</label>
+                    <textarea name="introText" rows="3" placeholder="Ďakujeme za Vašu objednávku..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Uložiť ako koncept</button>
+                    <button type="button" class="btn btn-success" id="issueInvoiceBtn">Vystaviť faktúru</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - New Client -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nový Klient</h3>
+                <button class="close-btn" data-close="clientModal">&times;</button>
+            </div>
+
+            <form id="clientForm">
+                <div class="form-group">
+                    <label>Názov / Meno</label>
+                    <input type="text" name="name" required placeholder="ACME s.r.o.">
+                </div>
+
+                <div class="form-group">
+                    <label>IČO</label>
+                    <input type="text" name="ico" pattern="\d{8}" placeholder="12345678">
+                    <small class="form-hint">8 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>DIČ</label>
+                    <input type="text" name="dic" pattern="\d{10}" placeholder="1234567890">
+                    <small class="form-hint">10 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>IČ DPH</label>
+                    <input type="text" name="icdph" pattern="SK\d{10}" placeholder="SK1234567890">
+                    <small class="form-hint">Formát: SK1234567890</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Ulica a číslo</label>
+                    <input type="text" name="street" placeholder="Hlavná 123">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>PSČ</label>
+                        <input type="text" name="zip" pattern="\d{3}\s?\d{2}" placeholder="811 01">
+                    </div>
+                    <div class="form-group">
+                        <label>Mesto</label>
+                        <input type="text" name="city" placeholder="Bratislava">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>IBAN</label>
+                    <input type="text" name="iban" pattern="SK\d{22}" placeholder="SK3112000000198742637541">
+                    <small class="form-hint">Formát: SK + 22 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="info@acme.sk">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Uložiť klienta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - New Item -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nová Položka</h3>
+                <button class="close-btn" data-close="itemModal">&times;</button>
+            </div>
+
+            <form id="itemForm">
+                <div class="form-group">
+                    <label>Názov položky / služby</label>
+                    <input type="text" name="itemName" required placeholder="Vývoj webovej aplikácie">
+                </div>
+
+                <div class="form-group">
+                    <label>Popis</label>
+                    <textarea name="description" rows="3" placeholder="Detailný popis služby alebo produktu..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Jednotka</label>
+                        <select name="unit" required>
+                            <option value="hod">hodina</option>
+                            <option value="ks">kus</option>
+                            <option value="deň">deň</option>
+                            <option value="mesiac">mesiac</option>
+                            <option value="služba">služba</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cena bez DPH (€)</label>
+                        <input type="number" name="price" step="0.01" required placeholder="50.00" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Sadzba DPH</label>
+                    <select name="vatRate" required>
+                        <option value="20">20% (štandardná sadzba)</option>
+                        <option value="10">10% (znížená sadzba)</option>
+                        <option value="0">0% (oslobodené)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="trackStock" id="trackStock"> Sledovať stav na sklade
+                    </label>
+                </div>
+
+                <div class="form-group" id="stockGroup" style="display: none;">
+                    <label>Počiatočný stav skladu</label>
+                    <input type="number" name="initialStock" placeholder="0" min="0">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Uložiť položku</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - New Expense -->
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nový Náklad / Výdavok</h3>
+                <button class="close-btn" data-close="expenseModal">&times;</button>
+            </div>
+
+            <form id="expenseForm">
+                <div class="form-group">
+                    <label>Dátum</label>
+                    <input type="date" name="date" required value="2025-10-27">
+                </div>
+
+                <div class="form-group">
+                    <label>Popis výdavku</label>
+                    <input type="text" name="description" required placeholder="Nákup kancelárskych potrieb">
+                </div>
+
+                <div class="form-group">
+                    <label>Kategória</label>
+                    <select name="category" required>
+                        <option value="MATERIAL">Materiál</option>
+                        <option value="ENERGIA">Energia</option>
+                        <option value="SLUZBY">Služby</option>
+                        <option value="NAJOM">Nájom</option>
+                        <option value="DOPRAVA">Doprava</option>
+                        <option value="MARKETING">Marketing</option>
+                        <option value="INE">Iné</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Suma s DPH (€)</label>
+                        <input type="number" name="amount" step="0.01" required placeholder="120.00" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sadzba DPH</label>
+                        <select name="vatRate" required>
+                            <option value="20">20%</option>
+                            <option value="10">10%</option>
+                            <option value="0">0%</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Spôsob úhrady</label>
+                    <select name="paymentMethod" required>
+                        <option value="PREVOD">Bankový prevod</option>
+                        <option value="HOTOVOST">Hotovosť</option>
+                        <option value="KARTA">Karta</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dodávateľ</label>
+                    <input type="text" name="supplier" placeholder="Názov dodávateľa">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Uložiť náklad</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
