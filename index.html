@@ -11,6 +11,13 @@
     <nav class="navbar">
         <div class="nav-brand">
             <h2>Fakturačný Systém</h2>
+            <div class="company-selector">
+                <label>Aktívna firma:</label>
+                <select id="activeCompanySelector">
+                    <option value="1">Moja SZČO</option>
+                    <option value="2">Moja s.r.o.</option>
+                </select>
+            </div>
         </div>
         <div class="nav-menu">
             <button class="nav-item active" data-page="dashboard">Dashboard</button>
@@ -18,6 +25,7 @@
             <button class="nav-item" data-page="clients">Klienti</button>
             <button class="nav-item" data-page="vat">DPH</button>
             <button class="nav-item" data-page="reports">Reporty</button>
+            <button class="nav-item" data-page="settings">Nastavenia</button>
         </div>
     </nav>
 
@@ -51,6 +59,34 @@
                 <h3>Klienti</h3>
                 <div class="value">12</div>
                 <div class="change">+2 tento mesiac</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="panel">
+                    <h3>Obrat v čase</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="panel">
+                    <h3>Príjmy vs Výdavky</h3>
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="panel">
+                    <h3>Top 5 klientov</h3>
+                    <canvas id="topClientsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="panel">
+                    <h3>Kategórie nákladov</h3>
+                    <canvas id="expenseCategoriesChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -554,6 +590,224 @@
         </div>
         <!-- End Reports Page -->
 
+        <!-- Settings Page -->
+        <div class="page" id="settings">
+            <div class="header">
+                <h1>Nastavenia</h1>
+                <p>Správa firiem a konfigurácia systému</p>
+            </div>
+
+            <!-- Company Management -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Moje firmy</h2>
+                    <button class="btn btn-primary" data-modal="addCompanyModal">Pridať firmu</button>
+                </div>
+
+                <div class="companies-grid">
+                    <div class="company-card active">
+                        <div class="company-logo-placeholder">
+                            <span>LOGO</span>
+                        </div>
+                        <div class="company-info">
+                            <h3>Moja SZČO</h3>
+                            <p><strong>IČO:</strong> 12345678</p>
+                            <p><strong>DIČ:</strong> 1234567890</p>
+                            <p><strong>IČ DPH:</strong> SK1234567890</p>
+                            <p><strong>Adresa:</strong> Hlavná 123, 811 01 Bratislava</p>
+                            <p><strong>IBAN:</strong> SK3112000000198742637541</p>
+                        </div>
+                        <div class="company-actions">
+                            <button class="btn btn-secondary" data-action="editCompany" data-company-id="1">Upraviť</button>
+                            <button class="btn btn-secondary" data-action="uploadLogo" data-company-id="1">Nahrať logo</button>
+                            <span class="badge badge-success">Aktívna</span>
+                        </div>
+                    </div>
+
+                    <div class="company-card">
+                        <div class="company-logo-placeholder">
+                            <span>LOGO</span>
+                        </div>
+                        <div class="company-info">
+                            <h3>Moja s.r.o.</h3>
+                            <p><strong>IČO:</strong> 23456789</p>
+                            <p><strong>DIČ:</strong> 2345678901</p>
+                            <p><strong>IČ DPH:</strong> SK2345678901</p>
+                            <p><strong>Adresa:</strong> Nová 45, 821 05 Bratislava</p>
+                            <p><strong>IBAN:</strong> SK4212000000198742637542</p>
+                        </div>
+                        <div class="company-actions">
+                            <button class="btn btn-secondary" data-action="editCompany" data-company-id="2">Upraviť</button>
+                            <button class="btn btn-secondary" data-action="uploadLogo" data-company-id="2">Nahrať logo</button>
+                            <button class="btn btn-primary btn-small" data-action="switchCompany" data-company-id="2">Prepnúť</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Settings -->
+            <div class="panel" style="margin-top: 30px;">
+                <h2>Nastavenia faktúr</h2>
+
+                <form id="invoiceSettingsForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Formát číslovania</label>
+                            <select name="numberingFormat">
+                                <option value="YYYY-NNNN">2025-0001</option>
+                                <option value="F-YYYY-NNNN">F-2025-0001</option>
+                                <option value="YYYYNNNN">20250001</option>
+                                <option value="NNNN/YYYY">0001/2025</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Prefix faktúr</label>
+                            <input type="text" name="invoicePrefix" placeholder="napr. F, INV" value="">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Počet dní splatnosti</label>
+                            <input type="number" name="dueDays" value="14" min="1">
+                            <small class="form-hint">Predvolený počet dní do splatnosti</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Variabilný symbol</label>
+                            <select name="variableSymbolType">
+                                <option value="invoice_number">Číslo faktúry</option>
+                                <option value="custom">Vlastný formát</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Predvolený úvodný text</label>
+                        <textarea name="defaultIntroText" rows="3" placeholder="Ďakujeme za Vašu objednávku...">Ďakujeme za Vašu objednávku. Tovar/služby budú dodané v dohodnutom termíne.</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Predvolený záverečný text</label>
+                        <textarea name="defaultFooterText" rows="3" placeholder="Ďakujeme za spoluprácu...">V prípade otázok nás neváhajte kontaktovať. Ďakujeme za spoluprácu.</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="autoReminders"> Automatické upomienky po splatnosti
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Uložiť nastavenia</button>
+                </form>
+            </div>
+
+            <!-- Payment Settings -->
+            <div class="panel" style="margin-top: 30px;">
+                <h2>Platobné údaje</h2>
+
+                <form id="paymentSettingsForm">
+                    <div class="form-group">
+                        <label>Primárny IBAN</label>
+                        <input type="text" name="primaryIban" pattern="SK\d{22}" value="SK3112000000198742637541">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SWIFT/BIC</label>
+                        <input type="text" name="swift" placeholder="napr. TATRSKBX">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Názov banky</label>
+                        <input type="text" name="bankName" placeholder="Tatra banka">
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="enableQrCode"> Generovať QR kód na faktúrach (Pay by Square)
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Uložiť platobné údaje</button>
+                </form>
+            </div>
+
+            <!-- Signature Settings -->
+            <div class="panel" style="margin-top: 30px;">
+                <h2>Podpis a pečiatka</h2>
+
+                <form id="signatureSettingsForm">
+                    <div class="form-group">
+                        <label>Meno a priezvisko na podpis</label>
+                        <input type="text" name="signatureName" placeholder="Ján Novák">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pozícia</label>
+                        <input type="text" name="signaturePosition" placeholder="Konateľ / Majiteľ">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nahrať podpis (obrázok)</label>
+                        <input type="file" name="signatureImage" accept="image/*">
+                        <small class="form-hint">Odporúčaný formát: PNG s priehľadným pozadím, max 500x200px</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nahrať pečiatku (obrázok)</label>
+                        <input type="file" name="stampImage" accept="image/*">
+                        <small class="form-hint">Odporúčaný formát: PNG s priehľadným pozadím</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Uložiť podpis</button>
+                </form>
+            </div>
+
+            <!-- System Settings -->
+            <div class="panel" style="margin-top: 30px;">
+                <h2>Systémové nastavenia</h2>
+
+                <form id="systemSettingsForm">
+                    <div class="form-group">
+                        <label>Jazyk</label>
+                        <select name="language">
+                            <option value="sk">Slovenčina</option>
+                            <option value="en">English</option>
+                            <option value="cs">Čeština</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mena</label>
+                        <select name="currency">
+                            <option value="EUR">EUR (€)</option>
+                            <option value="CZK">CZK (Kč)</option>
+                            <option value="USD">USD ($)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Formát dátumu</label>
+                        <select name="dateFormat">
+                            <option value="DD.MM.YYYY">DD.MM.YYYY (01.11.2025)</option>
+                            <option value="YYYY-MM-DD">YYYY-MM-DD (2025-11-01)</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY (11/01/2025)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="darkMode"> Tmavý režim
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Uložiť systémové nastavenia</button>
+                </form>
+            </div>
+        </div>
+        <!-- End Settings Page -->
+
     </div>
 
     <!-- Modal - New Invoice -->
@@ -838,6 +1092,96 @@
         </div>
     </div>
 
+    <!-- Modal - Add Company -->
+    <div class="modal" id="addCompanyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pridať firmu</h3>
+                <button class="close-btn" data-close="addCompanyModal">&times;</button>
+            </div>
+
+            <form id="addCompanyForm">
+                <div class="form-group">
+                    <label>Názov firmy</label>
+                    <input type="text" name="companyName" required placeholder="Názov SZČO / s.r.o.">
+                </div>
+
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select name="companyType" required>
+                        <option value="SZCO">SZČO (Živnosť)</option>
+                        <option value="SRO">s.r.o.</option>
+                        <option value="AS">a.s.</option>
+                        <option value="OTHER">Iné</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>IČO</label>
+                    <input type="text" name="ico" pattern="\d{8}" required placeholder="12345678">
+                    <small class="form-hint">8 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>DIČ</label>
+                    <input type="text" name="dic" pattern="\d{10}" placeholder="1234567890">
+                    <small class="form-hint">10 číslic (nepovinné)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>IČ DPH</label>
+                    <input type="text" name="icdph" pattern="SK\d{10}" placeholder="SK1234567890">
+                    <small class="form-hint">Len pre platcu DPH (nepovinné)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Ulica a číslo</label>
+                    <input type="text" name="street" required placeholder="Hlavná 123">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>PSČ</label>
+                        <input type="text" name="zip" pattern="\d{3}\s?\d{2}" required placeholder="811 01">
+                    </div>
+                    <div class="form-group">
+                        <label>Mesto</label>
+                        <input type="text" name="city" required placeholder="Bratislava">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Krajina</label>
+                    <select name="country">
+                        <option value="SK">Slovensko</option>
+                        <option value="CZ">Česko</option>
+                        <option value="AT">Rakúsko</option>
+                        <option value="HU">Maďarsko</option>
+                        <option value="PL">Poľsko</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>IBAN</label>
+                    <input type="text" name="iban" pattern="SK\d{22}" required placeholder="SK3112000000198742637541">
+                    <small class="form-hint">SK + 22 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="info@firma.sk">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefón</label>
+                    <input type="tel" name="phone" placeholder="+421 xxx xxx xxx">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Pridať firmu</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal - Client Detail -->
     <div class="modal" id="clientDetailModal">
         <div class="modal-content modal-large">
@@ -1047,6 +1391,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

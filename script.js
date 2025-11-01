@@ -2,16 +2,52 @@
 class InvoiceSystem {
     constructor() {
         this.currentPage = 'dashboard';
+        this.currentCompanyId = 1;
         this.mockClients = this.initMockClients();
         this.mockInvoices = this.initMockInvoices();
+        this.mockCompanies = this.initMockCompanies();
+        this.charts = {};
 
         this.initEventListeners();
         this.initValidation();
         this.initNavigation();
+        this.initCompanySelector();
+        this.initCharts();
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
         console.log('Offline režim: AKTÍVNY');
         console.log('Dáta uložené lokálne v SQLite databáze');
+        console.log('Multi-firma systém: AKTÍVNY');
+    }
+
+    // Initialize mock companies
+    initMockCompanies() {
+        return [
+            {
+                id: 1,
+                name: 'Moja SZČO',
+                type: 'SZCO',
+                ico: '12345678',
+                dic: '1234567890',
+                icdph: 'SK1234567890',
+                address: 'Hlavná 123, 811 01 Bratislava',
+                iban: 'SK3112000000198742637541',
+                email: 'info@mojaszco.sk',
+                phone: '+421 900 123 456'
+            },
+            {
+                id: 2,
+                name: 'Moja s.r.o.',
+                type: 'SRO',
+                ico: '23456789',
+                dic: '2345678901',
+                icdph: 'SK2345678901',
+                address: 'Nová 45, 821 05 Bratislava',
+                iban: 'SK4212000000198742637542',
+                email: 'info@mojasro.sk',
+                phone: '+421 900 654 321'
+            }
+        ];
     }
 
     // Initialize mock data
@@ -665,6 +701,317 @@ class InvoiceSystem {
     printPDF() {
         console.log('Printing PDF...');
         window.print();
+    }
+
+    // Initialize company selector
+    initCompanySelector() {
+        const selector = document.getElementById('activeCompanySelector');
+        if (selector) {
+            selector.addEventListener('change', (e) => {
+                this.switchCompany(parseInt(e.target.value));
+            });
+        }
+
+        // Company actions
+        document.querySelectorAll('[data-action="switchCompany"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.switchCompany(companyId);
+            });
+        });
+
+        document.querySelectorAll('[data-action="editCompany"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.editCompany(companyId);
+            });
+        });
+
+        document.querySelectorAll('[data-action="uploadLogo"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.uploadLogo(companyId);
+            });
+        });
+
+        // Add company form
+        const addCompanyForm = document.getElementById('addCompanyForm');
+        if (addCompanyForm) {
+            addCompanyForm.addEventListener('submit', (e) => this.addCompany(e));
+        }
+
+        // Settings forms
+        const invoiceSettingsForm = document.getElementById('invoiceSettingsForm');
+        if (invoiceSettingsForm) {
+            invoiceSettingsForm.addEventListener('submit', (e) => this.saveInvoiceSettings(e));
+        }
+
+        const paymentSettingsForm = document.getElementById('paymentSettingsForm');
+        if (paymentSettingsForm) {
+            paymentSettingsForm.addEventListener('submit', (e) => this.savePaymentSettings(e));
+        }
+
+        const signatureSettingsForm = document.getElementById('signatureSettingsForm');
+        if (signatureSettingsForm) {
+            signatureSettingsForm.addEventListener('submit', (e) => this.saveSignatureSettings(e));
+        }
+
+        const systemSettingsForm = document.getElementById('systemSettingsForm');
+        if (systemSettingsForm) {
+            systemSettingsForm.addEventListener('submit', (e) => this.saveSystemSettings(e));
+        }
+    }
+
+    // Switch active company
+    switchCompany(companyId) {
+        this.currentCompanyId = companyId;
+        const company = this.mockCompanies.find(c => c.id === companyId);
+
+        console.log('Switching to company:', company.name);
+        console.log('API Endpoint: POST /api/v1/companies/switch', { companyId });
+
+        // Update selector
+        const selector = document.getElementById('activeCompanySelector');
+        if (selector) {
+            selector.value = companyId;
+        }
+
+        // Update company cards
+        document.querySelectorAll('.company-card').forEach(card => {
+            card.classList.remove('active');
+        });
+
+        this.showNotification('Firma zmenená', `Prepli ste sa na: ${company.name}`, 'success');
+
+        // Reload data for this company
+        this.loadCompanyData(companyId);
+    }
+
+    // Load company data
+    loadCompanyData(companyId) {
+        console.log('Loading data for company:', companyId);
+        console.log('API Endpoint: GET /api/v1/companies/' + companyId + '/data');
+
+        // In a real app, you would fetch company-specific data here
+        // and update the dashboard, invoices, clients, etc.
+    }
+
+    // Edit company
+    editCompany(companyId) {
+        const company = this.mockCompanies.find(c => c.id === companyId);
+        console.log('Editing company:', company);
+        this.showNotification('Úprava firmy', 'Funkcia v príprave', 'info');
+    }
+
+    // Upload logo
+    uploadLogo(companyId) {
+        console.log('Upload logo for company:', companyId);
+        console.log('API Endpoint: POST /api/v1/companies/' + companyId + '/logo');
+        this.showNotification('Nahrávanie loga', 'Funkcia v príprave', 'info');
+    }
+
+    // Add company
+    addCompany(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        console.log('Adding new company');
+        console.log('API Endpoint: POST /api/v1/companies');
+
+        this.showNotification('Firma pridaná!', 'Nová firma bola úspešne pridaná.', 'success');
+        this.closeModal('addCompanyModal');
+        e.target.reset();
+    }
+
+    // Save invoice settings
+    saveInvoiceSettings(e) {
+        e.preventDefault();
+        console.log('Saving invoice settings');
+        console.log('API Endpoint: PUT /api/v1/settings/invoices');
+        this.showNotification('Nastavenia uložené', 'Nastavenia faktúr boli úspešne uložené.', 'success');
+    }
+
+    // Save payment settings
+    savePaymentSettings(e) {
+        e.preventDefault();
+        console.log('Saving payment settings');
+        console.log('API Endpoint: PUT /api/v1/settings/payment');
+        this.showNotification('Nastavenia uložené', 'Platobné údaje boli úspešne uložené.', 'success');
+    }
+
+    // Save signature settings
+    saveSignatureSettings(e) {
+        e.preventDefault();
+        console.log('Saving signature settings');
+        console.log('API Endpoint: PUT /api/v1/settings/signature');
+        this.showNotification('Nastavenia uložené', 'Podpis a pečiatka boli úspešne uložené.', 'success');
+    }
+
+    // Save system settings
+    saveSystemSettings(e) {
+        e.preventDefault();
+        console.log('Saving system settings');
+        console.log('API Endpoint: PUT /api/v1/settings/system');
+        this.showNotification('Nastavenia uložené', 'Systémové nastavenia boli úspešne uložené.', 'success');
+    }
+
+    // Initialize charts
+    initCharts() {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded');
+            return;
+        }
+
+        // Revenue over time chart
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            this.charts.revenue = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt'],
+                    datasets: [{
+                        label: 'Obrat (€)',
+                        data: [850, 1200, 1100, 1400, 1300, 1500, 1450, 1600, 1550, 1700],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Income vs Expense chart
+        const incomeExpenseCtx = document.getElementById('incomeExpenseChart');
+        if (incomeExpenseCtx) {
+            this.charts.incomeExpense = new Chart(incomeExpenseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt'],
+                    datasets: [
+                        {
+                            label: 'Príjmy',
+                            data: [850, 1200, 1100, 1400, 1300, 1500, 1450, 1600, 1550, 1700],
+                            backgroundColor: '#4CAF50'
+                        },
+                        {
+                            label: 'Výdavky',
+                            data: [300, 250, 400, 350, 300, 400, 350, 450, 400, 380],
+                            backgroundColor: '#f44336'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top clients chart
+        const topClientsCtx = document.getElementById('topClientsChart');
+        if (topClientsCtx) {
+            this.charts.topClients = new Chart(topClientsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ACME s.r.o.', 'Tech Solutions', 'Digital Marketing', 'StartUp XYZ', 'Ostatní'],
+                    datasets: [{
+                        data: [4200, 8750, 2500, 5200, 1800],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Expense categories chart
+        const expenseCategoriesCtx = document.getElementById('expenseCategoriesChart');
+        if (expenseCategoriesCtx) {
+            this.charts.expenseCategories = new Chart(expenseCategoriesCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Materiál', 'Energia', 'Služby', 'Nájom', 'Doprava', 'Marketing'],
+                    datasets: [{
+                        data: [450, 200, 850, 600, 300, 400],
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        console.log('Charts initialized');
     }
 
     // Show notification (custom implementation instead of alert)
