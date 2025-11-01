@@ -2,12 +2,14 @@
 class InvoiceSystem {
     constructor() {
         this.currentPage = 'dashboard';
-        this.currentCompanyId = 1;
         this.mockClients = this.initMockClients();
         this.mockInvoices = this.initMockInvoices();
-        this.mockCompanies = this.initMockCompanies();
         this.charts = {};
         this.filteredInvoices = [];
+
+        // Load companies from localStorage or initialize with defaults
+        this.loadCompanies();
+        this.currentCompanyId = this.getCurrentCompanyId();
 
         this.initEventListeners();
         this.initValidation();
@@ -16,41 +18,84 @@ class InvoiceSystem {
         this.initCharts();
         this.initInvoicesPage();
         this.initTaxCalculator();
+        this.renderCompanyCards();
+        this.updateCompanySelector();
+
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
         console.log('Offline režim: AKTÍVNY');
-        console.log('Dáta uložené lokálne v SQLite databáze');
+        console.log('Dáta uložené lokálne v localStorage');
         console.log('Multi-firma systém: AKTÍVNY');
+        console.log('Počet firiem:', this.companies.length);
     }
 
-    // Initialize mock companies
-    initMockCompanies() {
-        return [
-            {
-                id: 1,
-                name: 'Moja SZČO',
-                type: 'SZCO',
-                ico: '12345678',
-                dic: '1234567890',
-                icdph: 'SK1234567890',
-                address: 'Hlavná 123, 811 01 Bratislava',
-                iban: 'SK3112000000198742637541',
-                email: 'info@mojaszco.sk',
-                phone: '+421 900 123 456'
-            },
-            {
-                id: 2,
-                name: 'Moja s.r.o.',
-                type: 'SRO',
-                ico: '23456789',
-                dic: '2345678901',
-                icdph: 'SK2345678901',
-                address: 'Nová 45, 821 05 Bratislava',
-                iban: 'SK4212000000198742637542',
-                email: 'info@mojasro.sk',
-                phone: '+421 900 654 321'
+    // Load companies from localStorage or create defaults
+    loadCompanies() {
+        const stored = localStorage.getItem('invoiceSystemCompanies');
+        if (stored) {
+            this.companies = JSON.parse(stored);
+        } else {
+            // Initialize with default companies
+            this.companies = [
+                {
+                    id: 1,
+                    name: 'Moja SZČO',
+                    type: 'SZCO',
+                    ico: '12345678',
+                    dic: '1234567890',
+                    icdph: 'SK1234567890',
+                    street: 'Hlavná 123',
+                    city: 'Bratislava',
+                    zip: '811 01',
+                    address: 'Hlavná 123, 811 01 Bratislava',
+                    iban: 'SK3112000000198742637541',
+                    email: 'info@mojaszco.sk',
+                    phone: '+421 900 123 456',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    name: 'Moja s.r.o.',
+                    type: 'SRO',
+                    ico: '23456789',
+                    dic: '2345678901',
+                    icdph: 'SK2345678901',
+                    street: 'Nová 45',
+                    city: 'Bratislava',
+                    zip: '821 05',
+                    address: 'Nová 45, 821 05 Bratislava',
+                    iban: 'SK4212000000198742637542',
+                    email: 'info@mojasro.sk',
+                    phone: '+421 900 654 321',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            this.saveCompanies();
+        }
+    }
+
+    // Save companies to localStorage
+    saveCompanies() {
+        localStorage.setItem('invoiceSystemCompanies', JSON.stringify(this.companies));
+        console.log('Companies saved to localStorage:', this.companies.length);
+    }
+
+    // Get current company ID from localStorage or default to first company
+    getCurrentCompanyId() {
+        const stored = localStorage.getItem('currentCompanyId');
+        if (stored) {
+            const id = parseInt(stored);
+            // Verify company exists
+            if (this.companies.find(c => c.id === id)) {
+                return id;
             }
-        ];
+        }
+        return this.companies.length > 0 ? this.companies[0].id : 1;
+    }
+
+    // Set current company ID
+    setCurrentCompanyId(companyId) {
+        localStorage.setItem('currentCompanyId', companyId.toString());
     }
 
     // Initialize mock data
@@ -743,6 +788,12 @@ class InvoiceSystem {
             addCompanyForm.addEventListener('submit', (e) => this.addCompany(e));
         }
 
+        // Edit company form
+        const editCompanyForm = document.getElementById('editCompanyForm');
+        if (editCompanyForm) {
+            editCompanyForm.addEventListener('submit', (e) => this.updateCompany(e));
+        }
+
         // Settings forms
         const invoiceSettingsForm = document.getElementById('invoiceSettingsForm');
         if (invoiceSettingsForm) {
@@ -768,21 +819,22 @@ class InvoiceSystem {
     // Switch active company
     switchCompany(companyId) {
         this.currentCompanyId = companyId;
-        const company = this.mockCompanies.find(c => c.id === companyId);
+        this.setCurrentCompanyId(companyId);
+        const company = this.companies.find(c => c.id === companyId);
+
+        if (!company) {
+            this.showNotification('Chyba', 'Firma nebola nájdená', 'error');
+            return;
+        }
 
         console.log('Switching to company:', company.name);
         console.log('API Endpoint: POST /api/v1/companies/switch', { companyId });
 
         // Update selector
-        const selector = document.getElementById('activeCompanySelector');
-        if (selector) {
-            selector.value = companyId;
-        }
+        this.updateCompanySelector();
 
-        // Update company cards
-        document.querySelectorAll('.company-card').forEach(card => {
-            card.classList.remove('active');
-        });
+        // Update company cards active state
+        this.renderCompanyCards();
 
         this.showNotification('Firma zmenená', `Prepli ste sa na: ${company.name}`, 'success');
 
@@ -801,9 +853,26 @@ class InvoiceSystem {
 
     // Edit company
     editCompany(companyId) {
-        const company = this.mockCompanies.find(c => c.id === companyId);
+        const company = this.companies.find(c => c.id === companyId);
+        if (!company) return;
+
         console.log('Editing company:', company);
-        this.showNotification('Úprava firmy', 'Funkcia v príprave', 'info');
+
+        // Fill edit form
+        document.getElementById('editCompanyId').value = company.id;
+        document.getElementById('editCompanyName').value = company.name;
+        document.getElementById('editCompanyType').value = company.type;
+        document.getElementById('editCompanyIco').value = company.ico;
+        document.getElementById('editCompanyDic').value = company.dic || '';
+        document.getElementById('editCompanyIcdph').value = company.icdph || '';
+        document.getElementById('editCompanyStreet').value = company.street;
+        document.getElementById('editCompanyCity').value = company.city;
+        document.getElementById('editCompanyZip').value = company.zip;
+        document.getElementById('editCompanyEmail').value = company.email || '';
+        document.getElementById('editCompanyPhone').value = company.phone || '';
+        document.getElementById('editCompanyIban').value = company.iban || '';
+
+        this.openModal('editCompanyModal');
     }
 
     // Upload logo
@@ -821,12 +890,192 @@ class InvoiceSystem {
             return;
         }
 
-        console.log('Adding new company');
+        const formData = new FormData(e.target);
+
+        // Generate new ID
+        const newId = this.companies.length > 0
+            ? Math.max(...this.companies.map(c => c.id)) + 1
+            : 1;
+
+        const newCompany = {
+            id: newId,
+            name: formData.get('companyName'),
+            type: formData.get('companyType'),
+            ico: formData.get('ico'),
+            dic: formData.get('dic') || '',
+            icdph: formData.get('icdph') || '',
+            street: formData.get('street'),
+            city: formData.get('city'),
+            zip: formData.get('zip'),
+            address: `${formData.get('street')}, ${formData.get('zip')} ${formData.get('city')}`,
+            email: formData.get('email') || '',
+            phone: formData.get('phone') || '',
+            iban: formData.get('iban') || '',
+            createdAt: new Date().toISOString()
+        };
+
+        this.companies.push(newCompany);
+        this.saveCompanies();
+
+        console.log('Adding new company:', newCompany);
         console.log('API Endpoint: POST /api/v1/companies');
 
-        this.showNotification('Firma pridaná!', 'Nová firma bola úspešne pridaná.', 'success');
+        // Update UI
+        this.renderCompanyCards();
+        this.updateCompanySelector();
+
+        this.showNotification('Firma pridaná!', `${newCompany.name} bola úspešne pridaná.`, 'success');
         this.closeModal('addCompanyModal');
         e.target.reset();
+    }
+
+    // Update company
+    updateCompany(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const companyId = parseInt(formData.get('companyId'));
+
+        const company = this.companies.find(c => c.id === companyId);
+        if (!company) {
+            this.showNotification('Chyba', 'Firma nebola nájdená', 'error');
+            return;
+        }
+
+        // Update company data
+        company.name = formData.get('companyName');
+        company.type = formData.get('companyType');
+        company.ico = formData.get('ico');
+        company.dic = formData.get('dic') || '';
+        company.icdph = formData.get('icdph') || '';
+        company.street = formData.get('street');
+        company.city = formData.get('city');
+        company.zip = formData.get('zip');
+        company.address = `${formData.get('street')}, ${formData.get('zip')} ${formData.get('city')}`;
+        company.email = formData.get('email') || '';
+        company.phone = formData.get('phone') || '';
+        company.iban = formData.get('iban') || '';
+        company.updatedAt = new Date().toISOString();
+
+        this.saveCompanies();
+
+        console.log('Updating company:', company);
+        console.log('API Endpoint: PUT /api/v1/companies/' + companyId);
+
+        // Update UI
+        this.renderCompanyCards();
+        this.updateCompanySelector();
+
+        this.showNotification('Firma aktualizovaná!', `${company.name} bola úspešne aktualizovaná.`, 'success');
+        this.closeModal('editCompanyModal');
+    }
+
+    // Delete company
+    deleteCompany(companyId) {
+        const company = this.companies.find(c => c.id === companyId);
+        if (!company) return;
+
+        // Don't allow deleting the last company
+        if (this.companies.length === 1) {
+            this.showNotification('Nie je možné zmazať', 'Musíte mať aspoň jednu firmu v systéme.', 'warning');
+            return;
+        }
+
+        // Don't allow deleting active company
+        if (companyId === this.currentCompanyId) {
+            this.showNotification('Nie je možné zmazať', 'Nemôžete zmazať aktívnu firmu. Najprv prepnite na inú firmu.', 'warning');
+            return;
+        }
+
+        if (confirm(`Naozaj chcete zmazať firmu "${company.name}"?\n\nTáto akcia je nevratná a zmaže všetky súvisiace dáta (faktúry, klientov, atď.)`)) {
+            this.companies = this.companies.filter(c => c.id !== companyId);
+            this.saveCompanies();
+
+            console.log('Deleting company:', companyId);
+            console.log('API Endpoint: DELETE /api/v1/companies/' + companyId);
+
+            // Update UI
+            this.renderCompanyCards();
+            this.updateCompanySelector();
+
+            this.showNotification('Firma zmazaná', `${company.name} bola úspešne zmazaná.`, 'success');
+        }
+    }
+
+    // Render company cards in settings page
+    renderCompanyCards() {
+        const container = document.querySelector('.companies-grid');
+        if (!container) return;
+
+        container.innerHTML = this.companies.map(company => `
+            <div class="company-card ${company.id === this.currentCompanyId ? 'active' : ''}" data-company-id="${company.id}">
+                <div class="company-logo-placeholder">
+                    <span>${company.type}</span>
+                </div>
+                <div class="company-info">
+                    <h3>${company.name}</h3>
+                    <p><strong>IČO:</strong> ${company.ico}</p>
+                    ${company.dic ? `<p><strong>DIČ:</strong> ${company.dic}</p>` : ''}
+                    ${company.icdph ? `<p><strong>IČ DPH:</strong> ${company.icdph}</p>` : ''}
+                    <p><strong>Adresa:</strong> ${company.address}</p>
+                    ${company.iban ? `<p><strong>IBAN:</strong> ${company.iban}</p>` : ''}
+                    ${company.email ? `<p><strong>Email:</strong> ${company.email}</p>` : ''}
+                    ${company.phone ? `<p><strong>Tel:</strong> ${company.phone}</p>` : ''}
+                </div>
+                <div class="company-actions">
+                    <button class="btn btn-secondary" data-action="editCompany" data-company-id="${company.id}">Upraviť</button>
+                    ${company.id !== this.currentCompanyId ? `
+                        <button class="btn btn-primary btn-small" data-action="switchCompany" data-company-id="${company.id}">Prepnúť</button>
+                        <button class="btn btn-danger btn-small" data-action="deleteCompany" data-company-id="${company.id}">Zmazať</button>
+                    ` : `
+                        <span class="badge badge-success">Aktívna</span>
+                    `}
+                </div>
+            </div>
+        `).join('');
+
+        // Re-attach event listeners
+        this.attachCompanyCardListeners();
+    }
+
+    // Attach event listeners to company cards
+    attachCompanyCardListeners() {
+        document.querySelectorAll('[data-action="switchCompany"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.switchCompany(companyId);
+            });
+        });
+
+        document.querySelectorAll('[data-action="editCompany"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.editCompany(companyId);
+            });
+        });
+
+        document.querySelectorAll('[data-action="deleteCompany"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const companyId = parseInt(e.currentTarget.getAttribute('data-company-id'));
+                this.deleteCompany(companyId);
+            });
+        });
+    }
+
+    // Update company selector in navbar
+    updateCompanySelector() {
+        const selector = document.getElementById('activeCompanySelector');
+        if (!selector) return;
+
+        selector.innerHTML = this.companies.map(company => `
+            <option value="${company.id}" ${company.id === this.currentCompanyId ? 'selected' : ''}>
+                ${company.name}
+            </option>
+        `).join('');
     }
 
     // Save invoice settings

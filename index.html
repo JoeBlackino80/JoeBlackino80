@@ -1074,43 +1074,7 @@
                 </div>
 
                 <div class="companies-grid">
-                    <div class="company-card active">
-                        <div class="company-logo-placeholder">
-                            <span>LOGO</span>
-                        </div>
-                        <div class="company-info">
-                            <h3>Moja SZČO</h3>
-                            <p><strong>IČO:</strong> 12345678</p>
-                            <p><strong>DIČ:</strong> 1234567890</p>
-                            <p><strong>IČ DPH:</strong> SK1234567890</p>
-                            <p><strong>Adresa:</strong> Hlavná 123, 811 01 Bratislava</p>
-                            <p><strong>IBAN:</strong> SK3112000000198742637541</p>
-                        </div>
-                        <div class="company-actions">
-                            <button class="btn btn-secondary" data-action="editCompany" data-company-id="1">Upraviť</button>
-                            <button class="btn btn-secondary" data-action="uploadLogo" data-company-id="1">Nahrať logo</button>
-                            <span class="badge badge-success">Aktívna</span>
-                        </div>
-                    </div>
-
-                    <div class="company-card">
-                        <div class="company-logo-placeholder">
-                            <span>LOGO</span>
-                        </div>
-                        <div class="company-info">
-                            <h3>Moja s.r.o.</h3>
-                            <p><strong>IČO:</strong> 23456789</p>
-                            <p><strong>DIČ:</strong> 2345678901</p>
-                            <p><strong>IČ DPH:</strong> SK2345678901</p>
-                            <p><strong>Adresa:</strong> Nová 45, 821 05 Bratislava</p>
-                            <p><strong>IBAN:</strong> SK4212000000198742637542</p>
-                        </div>
-                        <div class="company-actions">
-                            <button class="btn btn-secondary" data-action="editCompany" data-company-id="2">Upraviť</button>
-                            <button class="btn btn-secondary" data-action="uploadLogo" data-company-id="2">Nahrať logo</button>
-                            <button class="btn btn-primary btn-small" data-action="switchCompany" data-company-id="2">Prepnúť</button>
-                        </div>
-                    </div>
+                    <!-- Companies will be rendered dynamically here -->
                 </div>
             </div>
 
@@ -1647,6 +1611,87 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full">Pridať firmu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - Edit Company -->
+    <div class="modal" id="editCompanyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upraviť firmu</h3>
+                <button class="close-btn" data-close="editCompanyModal">&times;</button>
+            </div>
+
+            <form id="editCompanyForm">
+                <input type="hidden" id="editCompanyId" name="companyId">
+
+                <div class="form-group">
+                    <label>Názov firmy</label>
+                    <input type="text" id="editCompanyName" name="companyName" required placeholder="Názov SZČO / s.r.o.">
+                </div>
+
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="editCompanyType" name="companyType" required>
+                        <option value="SZCO">SZČO (Živnosť)</option>
+                        <option value="SRO">s.r.o.</option>
+                        <option value="AS">a.s.</option>
+                        <option value="OTHER">Iné</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>IČO</label>
+                    <input type="text" id="editCompanyIco" name="ico" pattern="\d{8}" required placeholder="12345678">
+                    <small class="form-hint">8 číslic</small>
+                </div>
+
+                <div class="form-group">
+                    <label>DIČ</label>
+                    <input type="text" id="editCompanyDic" name="dic" pattern="\d{10}" placeholder="1234567890">
+                    <small class="form-hint">10 číslic (nepovinné)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>IČ DPH</label>
+                    <input type="text" id="editCompanyIcdph" name="icdph" pattern="SK\d{10}" placeholder="SK1234567890">
+                    <small class="form-hint">Len pre platcu DPH (nepovinné)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Ulica a číslo</label>
+                    <input type="text" id="editCompanyStreet" name="street" required placeholder="Hlavná 123">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>PSČ</label>
+                        <input type="text" id="editCompanyZip" name="zip" pattern="\d{3}\s?\d{2}" required placeholder="811 01">
+                    </div>
+                    <div class="form-group">
+                        <label>Mesto</label>
+                        <input type="text" id="editCompanyCity" name="city" required placeholder="Bratislava">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>IBAN</label>
+                    <input type="text" id="editCompanyIban" name="iban" pattern="SK\d{22}" placeholder="SK3112000000198742637541">
+                    <small class="form-hint">SK + 22 číslic (nepovinné)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editCompanyEmail" name="email" placeholder="info@firma.sk">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefón</label>
+                    <input type="tel" id="editCompanyPhone" name="phone" placeholder="+421 xxx xxx xxx">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Uložiť zmeny</button>
             </form>
         </div>
     </div>
