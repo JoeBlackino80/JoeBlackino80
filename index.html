@@ -24,6 +24,7 @@
             <button class="nav-item" data-page="invoices">Faktúry</button>
             <button class="nav-item" data-page="clients">Klienti</button>
             <button class="nav-item" data-page="vat">DPH</button>
+            <button class="nav-item" data-page="tax-calculator">Daňový kalkulátor</button>
             <button class="nav-item" data-page="reports">Reporty</button>
             <button class="nav-item" data-page="settings">Nastavenia</button>
         </div>
@@ -216,6 +217,240 @@
         </div>
         </div>
         <!-- End Dashboard Page -->
+
+        <!-- Invoices Page -->
+        <div class="page" id="invoices">
+            <div class="header">
+                <h1>Faktúry a doklady</h1>
+                <p>Správa všetkých fakturačných dokladov</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" style="margin-bottom: 30px;">
+                <button class="btn btn-primary" data-modal="invoiceModal">Nová faktúra</button>
+                <button class="btn btn-secondary" data-modal="proformaModal">Proforma faktúra</button>
+                <button class="btn btn-secondary" data-modal="offerModal">Cenová ponuka</button>
+                <button class="btn btn-secondary" id="bulkActionsBtn">Hromadné akcie</button>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="panel">
+                <h3>Filtre a vyhľadávanie</h3>
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label>Vyhľadať</label>
+                        <input type="text" id="invoiceSearch" placeholder="Číslo, klient, suma...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="statusFilter">
+                            <option value="">Všetky</option>
+                            <option value="draft">Koncept</option>
+                            <option value="issued">Vystavená</option>
+                            <option value="paid">Uhradená</option>
+                            <option value="overdue">Po splatnosti</option>
+                            <option value="cancelled">Stornovaná</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Klient</label>
+                        <select id="clientFilter">
+                            <option value="">Všetci klienti</option>
+                            <option value="1">ACME s.r.o.</option>
+                            <option value="2">Tech Solutions s.r.o.</option>
+                            <option value="3">Digital Marketing s.r.o.</option>
+                            <option value="4">StartUp XYZ</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dátum od</label>
+                        <input type="date" id="dateFrom">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dátum do</label>
+                        <input type="date" id="dateTo">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Suma od (€)</label>
+                        <input type="number" id="amountFrom" placeholder="0" step="0.01" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Suma do (€)</label>
+                        <input type="number" id="amountTo" placeholder="10000" step="0.01" min="0">
+                    </div>
+
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" id="applyFiltersBtn" style="width: 100%;">Použiť filtre</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Stats -->
+            <div class="stats" style="margin-top: 30px;">
+                <div class="stat-card">
+                    <h3>Celkovo faktúr</h3>
+                    <div class="value" id="totalInvoicesCount">23</div>
+                    <div class="change">v aktuálnom roku</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Neuhradené</h3>
+                    <div class="value warning" id="unpaidInvoicesCount">5</div>
+                    <div class="change" id="unpaidInvoicesAmount">€4,350 celkom</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Po splatnosti</h3>
+                    <div class="value danger" id="overdueInvoicesCount">3</div>
+                    <div class="change" id="overdueInvoicesAmount">€2,340 celkom</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Tento mesiac</h3>
+                    <div class="value" id="thisMonthRevenue">€3,450</div>
+                    <div class="change">+12% oproti minulému</div>
+                </div>
+            </div>
+
+            <!-- Invoices Table -->
+            <div class="panel" style="margin-top: 30px;">
+                <div class="panel-header">
+                    <h2>Zoznam faktúr</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary btn-small" id="exportTableBtn">Export</button>
+                        <button class="btn btn-secondary btn-small" id="printTableBtn">Tlač</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="table" id="invoicesTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllInvoices"></th>
+                                <th>Číslo</th>
+                                <th>Typ</th>
+                                <th>Klient</th>
+                                <th>Dátum vystavenia</th>
+                                <th>Splatnosť</th>
+                                <th>Suma bez DPH</th>
+                                <th>DPH</th>
+                                <th>Celkom s DPH</th>
+                                <th>Status</th>
+                                <th>Akcie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesTableBody">
+                            <tr>
+                                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="1"></td>
+                                <td><strong>2025-0042</strong></td>
+                                <td>Faktúra</td>
+                                <td>ACME s.r.o.</td>
+                                <td>27.10.2025</td>
+                                <td>10.11.2025</td>
+                                <td>€1,000.00</td>
+                                <td>€200.00</td>
+                                <td><strong>€1,200.00</strong></td>
+                                <td><span class="badge badge-success">Uhradená</span></td>
+                                <td>
+                                    <div class="action-buttons-compact">
+                                        <button class="btn btn-secondary btn-small" data-action="viewInvoice" data-invoice-id="1" title="Zobraziť">👁️</button>
+                                        <button class="btn btn-secondary btn-small" data-action="downloadPdf" data-invoice-id="1" title="Stiahnuť PDF">📄</button>
+                                        <button class="btn btn-secondary btn-small" data-action="duplicate" data-invoice-id="1" title="Duplikovať">📋</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="2"></td>
+                                <td><strong>2025-0041</strong></td>
+                                <td>Faktúra</td>
+                                <td>Tech Solutions s.r.o.</td>
+                                <td>25.10.2025</td>
+                                <td>08.11.2025</td>
+                                <td>€2,916.67</td>
+                                <td>€583.33</td>
+                                <td><strong>€3,500.00</strong></td>
+                                <td><span class="badge badge-warning">Vystavená</span></td>
+                                <td>
+                                    <div class="action-buttons-compact">
+                                        <button class="btn btn-secondary btn-small" data-action="viewInvoice" data-invoice-id="2">👁️</button>
+                                        <button class="btn btn-secondary btn-small" data-action="downloadPdf" data-invoice-id="2">📄</button>
+                                        <button class="btn btn-success btn-small" data-action="markPaid" data-invoice-id="2" title="Označiť ako uhradenú">✓</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="3"></td>
+                                <td><strong>2025-0040</strong></td>
+                                <td>Faktúra</td>
+                                <td>Digital Marketing s.r.o.</td>
+                                <td>20.10.2025</td>
+                                <td>03.11.2025</td>
+                                <td>€708.33</td>
+                                <td>€141.67</td>
+                                <td><strong>€850.00</strong></td>
+                                <td><span class="badge badge-danger">Po splatnosti</span></td>
+                                <td>
+                                    <div class="action-buttons-compact">
+                                        <button class="btn btn-secondary btn-small" data-action="viewInvoice" data-invoice-id="3">👁️</button>
+                                        <button class="btn btn-secondary btn-small" data-action="downloadPdf" data-invoice-id="3">📄</button>
+                                        <button class="btn btn-warning btn-small" data-action="sendReminder" data-invoice-id="3" title="Odoslať upomienku">📧</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="4"></td>
+                                <td><strong>CP-2025-015</strong></td>
+                                <td>Cenová ponuka</td>
+                                <td>StartUp XYZ</td>
+                                <td>18.10.2025</td>
+                                <td>01.11.2025</td>
+                                <td>€4,333.33</td>
+                                <td>€866.67</td>
+                                <td><strong>€5,200.00</strong></td>
+                                <td><span class="badge badge-info">Ponuka</span></td>
+                                <td>
+                                    <div class="action-buttons-compact">
+                                        <button class="btn btn-secondary btn-small" data-action="viewInvoice" data-invoice-id="4">👁️</button>
+                                        <button class="btn btn-secondary btn-small" data-action="downloadPdf" data-invoice-id="4">📄</button>
+                                        <button class="btn btn-primary btn-small" data-action="convertToInvoice" data-invoice-id="4" title="Konvertovať na faktúru">🔄</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="5"></td>
+                                <td><strong>2025-0039</strong></td>
+                                <td>Proforma</td>
+                                <td>ACME s.r.o.</td>
+                                <td>15.10.2025</td>
+                                <td>29.10.2025</td>
+                                <td>€2,500.00</td>
+                                <td>€500.00</td>
+                                <td><strong>€3,000.00</strong></td>
+                                <td><span class="badge badge-info">Proforma</span></td>
+                                <td>
+                                    <div class="action-buttons-compact">
+                                        <button class="btn btn-secondary btn-small" data-action="viewInvoice" data-invoice-id="5">👁️</button>
+                                        <button class="btn btn-secondary btn-small" data-action="downloadPdf" data-invoice-id="5">📄</button>
+                                        <button class="btn btn-primary btn-small" data-action="convertToInvoice" data-invoice-id="5">🔄</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="btn btn-secondary btn-small" disabled>Predchádzajúca</button>
+                    <span class="pagination-info">Strana 1 z 1 (5 faktúr)</span>
+                    <button class="btn btn-secondary btn-small" disabled>Nasledujúca</button>
+                </div>
+            </div>
+        </div>
+        <!-- End Invoices Page -->
 
         <!-- Clients Page -->
         <div class="page" id="clients">
@@ -589,6 +824,240 @@
             </div>
         </div>
         <!-- End Reports Page -->
+
+        <!-- Tax Calculator Page -->
+        <div class="page" id="tax-calculator">
+            <div class="header">
+                <h1>Daňový kalkulátor pre SZČO</h1>
+                <p>Výpočet daní, odvodov a čistého príjmu</p>
+            </div>
+
+            <div class="tax-calc-container">
+                <!-- Income Input -->
+                <div class="panel">
+                    <h2>Príjmy a výdavky</h2>
+                    <form id="taxCalculatorForm">
+                        <div class="form-group">
+                            <label>Celkové príjmy za rok (€)</label>
+                            <input type="number" id="totalIncome" step="0.01" min="0" value="25000" placeholder="25000.00">
+                            <small class="form-hint">Všetky príjmy z podnikania</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Typ výdavkov</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="expenseType" value="pausalne" checked>
+                                    <span>Paušálne výdavky 40%</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="expenseType" value="skutocne">
+                                    <span>Skutočné výdavky</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="realExpensesGroup" style="display: none;">
+                            <label>Skutočné výdavky za rok (€)</label>
+                            <input type="number" id="realExpenses" step="0.01" min="0" value="0" placeholder="10000.00">
+                            <small class="form-hint">Všetky preukázateľné náklady na podnikanie</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Som platiteľ DPH</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="vatPayer" value="yes">
+                                    <span>Áno</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="vatPayer" value="no" checked>
+                                    <span>Nie</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mám nárok na daňový bonus na dieťa</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="taxBonus" value="yes">
+                                    <span>Áno</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="taxBonus" value="no" checked>
+                                    <span>Nie</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="childrenCountGroup" style="display: none;">
+                            <label>Počet vyživovaných detí</label>
+                            <input type="number" id="childrenCount" min="0" max="10" value="1">
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-full" id="calculateTaxBtn">Vypočítať dane</button>
+                    </form>
+                </div>
+
+                <!-- Results -->
+                <div class="panel">
+                    <h2>Výsledky výpočtu</h2>
+
+                    <div id="taxResults" style="display: none;">
+                        <!-- Tax Base -->
+                        <div class="tax-result-section">
+                            <h3>Základ dane</h3>
+                            <div class="tax-calculation-detail">
+                                <div class="calc-row">
+                                    <span>Príjmy:</span>
+                                    <span id="resultIncome">€25,000.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Výdavky:</span>
+                                    <span id="resultExpenses">€10,000.00</span>
+                                </div>
+                                <div class="calc-row highlight">
+                                    <strong>Základ dane:</strong>
+                                    <strong id="resultTaxBase">€15,000.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Income Tax -->
+                        <div class="tax-result-section">
+                            <h3>Daň z príjmu</h3>
+                            <div class="tax-calculation-detail">
+                                <div class="calc-row">
+                                    <span>Sadzba dane:</span>
+                                    <span id="resultTaxRate">19%</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Nezdaniteľná časť:</span>
+                                    <span id="resultTaxFreeAmount">€4,579.26</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Daňový bonus:</span>
+                                    <span id="resultTaxBonus">€0.00</span>
+                                </div>
+                                <div class="calc-row highlight">
+                                    <strong>Daň z príjmu celkom:</strong>
+                                    <strong id="resultIncomeTax">€1,979.94</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Social Insurance -->
+                        <div class="tax-result-section">
+                            <h3>Sociálne odvody</h3>
+                            <div class="tax-calculation-detail">
+                                <div class="calc-row">
+                                    <span>Nemocenské poistenie:</span>
+                                    <span id="resultSickness">€0.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Dôchodkové poistenie:</span>
+                                    <span id="resultPension">€1,800.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Invalidné poistenie:</span>
+                                    <span id="resultDisability">€450.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Garančné poistenie:</span>
+                                    <span id="resultGuarantee">€15.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Poistenie v nezamestnanosti:</span>
+                                    <span id="resultUnemployment">€0.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Rezervný fond solidarity:</span>
+                                    <span id="resultSolidarity">€75.00</span>
+                                </div>
+                                <div class="calc-row highlight">
+                                    <strong>Sociálna poisťovňa celkom:</strong>
+                                    <strong id="resultSocialTotal">€2,340.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health Insurance -->
+                        <div class="tax-result-section">
+                            <h3>Zdravotné poistenie</h3>
+                            <div class="tax-calculation-detail">
+                                <div class="calc-row">
+                                    <span>Vymerávací základ:</span>
+                                    <span id="resultHealthBase">€15,000.00</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span>Sadzba:</span>
+                                    <span>14%</span>
+                                </div>
+                                <div class="calc-row highlight">
+                                    <strong>Zdravotné poistenie celkom:</strong>
+                                    <strong id="resultHealthTotal">€2,100.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="tax-summary">
+                            <h2>Celkový prehľad</h2>
+                            <div class="summary-cards">
+                                <div class="summary-card">
+                                    <h4>Príjmy</h4>
+                                    <div class="summary-value positive" id="summaryIncome">€25,000.00</div>
+                                </div>
+                                <div class="summary-card">
+                                    <h4>Dane a odvody</h4>
+                                    <div class="summary-value negative" id="summaryTaxes">€6,419.94</div>
+                                    <small id="summaryTaxesPercent">25.7% z príjmov</small>
+                                </div>
+                                <div class="summary-card highlight-card">
+                                    <h4>Čistý príjem</h4>
+                                    <div class="summary-value" id="summaryNet">€18,580.06</div>
+                                    <small id="summaryNetMonthly">€1,548.34 mesačne</small>
+                                </div>
+                            </div>
+
+                            <div class="tax-breakdown-chart" style="margin-top: 30px;">
+                                <h4>Rozdelenie príjmu</h4>
+                                <canvas id="taxBreakdownChart" style="max-height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="taxResultsPlaceholder" class="empty-state">
+                        <p>Zadajte údaje a kliknite na "Vypočítať dane" pre zobrazenie výsledkov.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="panel" style="margin-top: 30px;">
+                <h3>Informácie o výpočte</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Paušálne výdavky:</strong>
+                        <p>SZČO si môže uplatniť paušálne výdavky vo výške 40% z príjmov (max. do výšky príjmov).</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Sadzba dane:</strong>
+                        <p>Pre príjmy do €39,268.94 je sadzba 19%. Pre vyššie príjmy je progresívne zdanenie.</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Odvody:</strong>
+                        <p>SZČO platí odvody do Sociálnej poisťovne (min. €234/mes) a do Zdravotnej poisťovne (min. €84.26/mes).</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Daňový bonus:</strong>
+                        <p>Na vyživované dieťa do 18 rokov (alebo do 25 pri štúdiu) je bonus €70/mesiac (€840/rok).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Tax Calculator Page -->
 
         <!-- Settings Page -->
         <div class="page" id="settings">
@@ -1390,6 +1859,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>

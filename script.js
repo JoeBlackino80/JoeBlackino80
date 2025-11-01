@@ -7,12 +7,15 @@ class InvoiceSystem {
         this.mockInvoices = this.initMockInvoices();
         this.mockCompanies = this.initMockCompanies();
         this.charts = {};
+        this.filteredInvoices = [];
 
         this.initEventListeners();
         this.initValidation();
         this.initNavigation();
         this.initCompanySelector();
         this.initCharts();
+        this.initInvoicesPage();
+        this.initTaxCalculator();
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
         console.log('Offline režim: AKTÍVNY');
@@ -1014,12 +1017,588 @@ class InvoiceSystem {
         console.log('Charts initialized');
     }
 
-    // Show notification (custom implementation instead of alert)
+    // Show toast notification (modern replacement for alert)
     showNotification(title, message, type = 'info') {
-        // For now, use console and alert
-        // In production, you would create a custom toast notification
+        const container = document.getElementById('toastContainer');
+        if (!container) {
+            console.error('Toast container not found');
+            return;
+        }
+
+        const icons = {
+            success: '✓',
+            error: '✗',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <span class="toast-icon">${icons[type] || icons.info}</span>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">&times;</button>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto dismiss after 4 seconds
+        const dismissTimer = setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 4000);
+
+        // Close button handler
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            clearTimeout(dismissTimer);
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        });
+
         console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
-        alert(title + '\n\n' + message);
+    }
+
+    // Initialize invoices page
+    initInvoicesPage() {
+        // Apply filters button
+        const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', () => this.applyInvoiceFilters());
+        }
+
+        // Reset filters button
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', () => this.resetInvoiceFilters());
+        }
+
+        // Bulk actions
+        const selectAllCheckbox = document.getElementById('selectAllInvoices');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                document.querySelectorAll('.invoice-checkbox').forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+        }
+
+        const bulkMarkPaidBtn = document.getElementById('bulkMarkPaid');
+        if (bulkMarkPaidBtn) {
+            bulkMarkPaidBtn.addEventListener('click', () => this.bulkMarkAsPaid());
+        }
+
+        const bulkExportBtn = document.getElementById('bulkExport');
+        if (bulkExportBtn) {
+            bulkExportBtn.addEventListener('click', () => this.bulkExportInvoices());
+        }
+
+        // Load initial invoices
+        this.loadInvoices();
+    }
+
+    // Load and display invoices
+    loadInvoices() {
+        // Generate more mock invoices for demonstration
+        const allInvoices = [
+            { id: 1, number: '2025-0042', type: 'Faktúra', clientId: 1, clientName: 'ACME s.r.o.', date: '27.10.2025', dueDate: '10.11.2025', base: 1000, vat: 200, total: 1200, status: 'paid' },
+            { id: 2, number: '2025-0041', type: 'Faktúra', clientId: 2, clientName: 'Tech Solutions s.r.o.', date: '25.10.2025', dueDate: '08.11.2025', base: 2916.67, vat: 583.33, total: 3500, status: 'issued' },
+            { id: 3, number: '2025-0040', type: 'Faktúra', clientId: 3, clientName: 'Digital Marketing s.r.o.', date: '20.10.2025', dueDate: '03.11.2025', base: 708.33, vat: 141.67, total: 850, status: 'overdue' },
+            { id: 4, number: '2025-0039', type: 'Faktúra', clientId: 4, clientName: 'StartUp XYZ', date: '15.10.2025', dueDate: '29.10.2025', base: 4333.33, vat: 866.67, total: 5200, status: 'paid' },
+            { id: 5, number: '2025-0038', type: 'Zálohová faktúra', clientId: 1, clientName: 'ACME s.r.o.', date: '10.10.2025', dueDate: '24.10.2025', base: 1666.67, vat: 333.33, total: 2000, status: 'paid' },
+            { id: 6, number: '2025-0037', type: 'Faktúra', clientId: 2, clientName: 'Tech Solutions s.r.o.', date: '05.10.2025', dueDate: '19.10.2025', base: 2083.33, vat: 416.67, total: 2500, status: 'issued' },
+            { id: 7, number: '2025-0036', type: 'Dobropis', clientId: 3, clientName: 'Digital Marketing s.r.o.', date: '01.10.2025', dueDate: '15.10.2025', base: 416.67, vat: 83.33, total: 500, status: 'cancelled' },
+            { id: 8, number: '2025-0035', type: 'Faktúra', clientId: 1, clientName: 'ACME s.r.o.', date: '28.09.2025', dueDate: '12.10.2025', base: 833.33, vat: 166.67, total: 1000, status: 'paid' }
+        ];
+
+        this.filteredInvoices = allInvoices;
+        this.renderInvoices(allInvoices);
+        this.updateInvoiceStats(allInvoices);
+    }
+
+    // Render invoices table
+    renderInvoices(invoices) {
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return;
+
+        if (invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px;">Žiadne faktúry neboli nájdené</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = invoices.map(inv => `
+            <tr>
+                <td><input type="checkbox" class="invoice-checkbox" data-invoice-id="${inv.id}"></td>
+                <td><strong>${inv.number}</strong></td>
+                <td>${inv.type}</td>
+                <td>${inv.clientName}</td>
+                <td>${inv.date}</td>
+                <td>${inv.dueDate}</td>
+                <td>€${inv.base.toFixed(2)}</td>
+                <td>€${inv.vat.toFixed(2)}</td>
+                <td><strong>€${inv.total.toFixed(2)}</strong></td>
+                <td><span class="badge badge-${this.getStatusClass(inv.status)}">${this.getStatusLabel(inv.status)}</span></td>
+                <td>
+                    <button class="btn btn-secondary btn-small" onclick="invoiceSystem.viewDocument('${inv.number}')">Zobraziť</button>
+                    <button class="btn btn-secondary btn-small" onclick="invoiceSystem.downloadInvoice(${inv.id})">PDF</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Update invoice statistics
+    updateInvoiceStats(invoices) {
+        const totalInvoices = invoices.length;
+        const unpaidInvoices = invoices.filter(i => i.status === 'issued' || i.status === 'overdue').length;
+        const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
+        const thisMonthRevenue = invoices
+            .filter(i => i.date.includes('10.2025') && i.status !== 'cancelled')
+            .reduce((sum, i) => sum + i.total, 0);
+
+        document.getElementById('totalInvoicesCount').textContent = totalInvoices;
+        document.getElementById('unpaidInvoicesCount').textContent = unpaidInvoices;
+        document.getElementById('overdueInvoicesCount').textContent = overdueInvoices;
+        document.getElementById('thisMonthRevenue').textContent = '€' + thisMonthRevenue.toFixed(2);
+    }
+
+    // Apply invoice filters
+    applyInvoiceFilters() {
+        const search = document.getElementById('invoiceSearch')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const clientFilter = document.getElementById('clientFilter')?.value || '';
+        const dateFrom = document.getElementById('dateFrom')?.value || '';
+        const dateTo = document.getElementById('dateTo')?.value || '';
+        const amountFrom = parseFloat(document.getElementById('amountFrom')?.value) || 0;
+        const amountTo = parseFloat(document.getElementById('amountTo')?.value) || Infinity;
+
+        // Start with all invoices
+        this.loadInvoices();
+
+        let filtered = this.filteredInvoices.filter(invoice => {
+            // Search filter
+            if (search && !invoice.number.toLowerCase().includes(search) &&
+                !invoice.clientName.toLowerCase().includes(search) &&
+                !invoice.total.toString().includes(search)) {
+                return false;
+            }
+
+            // Status filter
+            if (statusFilter && invoice.status !== statusFilter) {
+                return false;
+            }
+
+            // Client filter
+            if (clientFilter && invoice.clientId.toString() !== clientFilter) {
+                return false;
+            }
+
+            // Date range filter
+            if (dateFrom && this.compareDates(invoice.date, dateFrom) < 0) {
+                return false;
+            }
+            if (dateTo && this.compareDates(invoice.date, dateTo) > 0) {
+                return false;
+            }
+
+            // Amount range filter
+            if (invoice.total < amountFrom || invoice.total > amountTo) {
+                return false;
+            }
+
+            return true;
+        });
+
+        this.filteredInvoices = filtered;
+        this.renderInvoices(filtered);
+        this.updateInvoiceStats(filtered);
+        this.showNotification('Filtre aplikované', `Nájdených ${filtered.length} faktúr`, 'success');
+    }
+
+    // Reset invoice filters
+    resetInvoiceFilters() {
+        document.getElementById('invoiceSearch').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('clientFilter').value = '';
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
+        document.getElementById('amountFrom').value = '';
+        document.getElementById('amountTo').value = '';
+
+        this.loadInvoices();
+        this.showNotification('Filtre resetované', 'Všetky filtre boli zrušené', 'info');
+    }
+
+    // Helper: Compare dates in DD.MM.YYYY format
+    compareDates(date1, date2) {
+        const parseDate = (dateStr) => {
+            const [day, month, year] = dateStr.split('.');
+            return new Date(year, month - 1, day);
+        };
+
+        const d1 = parseDate(date1);
+        const d2 = typeof date2 === 'string' && date2.includes('.') ? parseDate(date2) : new Date(date2);
+
+        return d1 - d2;
+    }
+
+    // Get status CSS class
+    getStatusClass(status) {
+        const classes = {
+            'draft': 'secondary',
+            'issued': 'warning',
+            'paid': 'success',
+            'overdue': 'danger',
+            'cancelled': 'secondary'
+        };
+        return classes[status] || 'secondary';
+    }
+
+    // Get status label
+    getStatusLabel(status) {
+        const labels = {
+            'draft': 'Koncept',
+            'issued': 'Vystavená',
+            'paid': 'Uhradená',
+            'overdue': 'Po splatnosti',
+            'cancelled': 'Stornovaná'
+        };
+        return labels[status] || status;
+    }
+
+    // Bulk mark as paid
+    bulkMarkAsPaid() {
+        const checked = document.querySelectorAll('.invoice-checkbox:checked');
+        if (checked.length === 0) {
+            this.showNotification('Žiadny výber', 'Prosím vyberte aspoň jednu faktúru', 'warning');
+            return;
+        }
+
+        console.log('API Endpoint: POST /api/v1/invoices/bulk-update');
+        console.log('Marking as paid:', checked.length, 'invoices');
+
+        this.showNotification('Faktúry označené', `${checked.length} faktúr bolo označených ako uhradené`, 'success');
+    }
+
+    // Bulk export invoices
+    bulkExportInvoices() {
+        const checked = document.querySelectorAll('.invoice-checkbox:checked');
+        if (checked.length === 0) {
+            this.showNotification('Žiadny výber', 'Prosím vyberte aspoň jednu faktúru', 'warning');
+            return;
+        }
+
+        console.log('API Endpoint: POST /api/v1/invoices/bulk-export');
+        console.log('Exporting:', checked.length, 'invoices');
+
+        this.showNotification('Export faktúr', `${checked.length} faktúr bolo exportovaných`, 'success');
+    }
+
+    // Download single invoice
+    downloadInvoice(invoiceId) {
+        console.log('Downloading invoice:', invoiceId);
+        console.log('API Endpoint: GET /api/v1/invoices/' + invoiceId + '/pdf');
+        this.showNotification('PDF stiahnuté', 'Faktúra bola stiahnutá ako PDF', 'success');
+    }
+
+    // Initialize tax calculator
+    initTaxCalculator() {
+        const calculateBtn = document.getElementById('calculateTaxBtn');
+        if (calculateBtn) {
+            calculateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.calculateTax();
+            });
+        }
+
+        // Update real expenses field visibility
+        const expenseTypeRadios = document.querySelectorAll('input[name="expenseType"]');
+        expenseTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const realExpensesGroup = document.getElementById('realExpensesGroup');
+                if (realExpensesGroup) {
+                    realExpensesGroup.style.display = e.target.value === 'skutocne' ? 'block' : 'none';
+                }
+            });
+        });
+    }
+
+    // Calculate Slovak SZČO taxes
+    calculateTax() {
+        // Get input values
+        const totalIncome = parseFloat(document.getElementById('totalIncome')?.value) || 0;
+        const expenseType = document.querySelector('input[name="expenseType"]:checked')?.value || 'pausalne';
+        const realExpenses = parseFloat(document.getElementById('realExpenses')?.value) || 0;
+        const vatPayer = document.getElementById('vatPayer')?.checked || false;
+        const taxBonus = document.getElementById('taxBonus')?.checked || false;
+        const childrenCount = parseInt(document.getElementById('childrenCount')?.value) || 0;
+
+        // Calculate expenses
+        let expenses;
+        if (expenseType === 'pausalne') {
+            expenses = totalIncome * 0.40; // 40% paušálne výdavky
+        } else {
+            expenses = realExpenses;
+        }
+
+        // Tax base (income - expenses)
+        const taxBase = Math.max(0, totalIncome - expenses);
+
+        // Income tax calculation (19% for SZČO)
+        const taxRate = 0.19;
+        const nontaxableAmount = 5174.50; // Nezdaniteľná časť základu 2025
+        const taxableIncome = Math.max(0, taxBase - nontaxableAmount);
+        let incomeTax = taxableIncome * taxRate;
+
+        // Tax bonus (€840/year per child under certain conditions)
+        const bonusPerChild = 840;
+        let taxBonusAmount = 0;
+        if (taxBonus && childrenCount > 0) {
+            taxBonusAmount = childrenCount * bonusPerChild;
+            incomeTax = Math.max(0, incomeTax - taxBonusAmount);
+        }
+
+        // Social insurance (2025 rates for SZČO)
+        const socialInsuranceBase = taxBase;
+        const oldAgePension = socialInsuranceBase * 0.18; // Starobné poistenie
+        const disabilityPension = socialInsuranceBase * 0.06; // Invalidné poistenie
+        const guaranteeFund = socialInsuranceBase * 0.0025; // Garančné poistenie
+        const reserveFund = socialInsuranceBase * 0.0475; // Rezervný fond solidarity
+        const unemploymentInsurance = 0; // SZČO neplatí poistenie v nezamestnanosti
+        const accidentInsurance = 0; // SZČO neplatí úrazové poistenie
+
+        const totalSocialInsurance = oldAgePension + disabilityPension + guaranteeFund + reserveFund;
+
+        // Health insurance (14% for SZČO)
+        const healthInsurance = socialInsuranceBase * 0.14;
+
+        // Total taxes and insurance
+        const totalTaxes = incomeTax + totalSocialInsurance + healthInsurance;
+
+        // Net income
+        const netIncome = totalIncome - expenses - totalTaxes;
+        const monthlyNet = netIncome / 12;
+
+        // Display results
+        this.displayTaxResults({
+            totalIncome,
+            expenses,
+            expenseType,
+            taxBase,
+            taxRate,
+            nontaxableAmount,
+            taxableIncome,
+            incomeTax,
+            taxBonusAmount,
+            childrenCount,
+            oldAgePension,
+            disabilityPension,
+            guaranteeFund,
+            reserveFund,
+            totalSocialInsurance,
+            healthInsurance,
+            totalTaxes,
+            netIncome,
+            monthlyNet,
+            vatPayer
+        });
+
+        this.showNotification('Dane vypočítané', 'Výpočet daní bol úspešne dokončený', 'success');
+    }
+
+    // Display tax calculation results
+    displayTaxResults(data) {
+        const resultsDiv = document.getElementById('taxResults');
+        if (!resultsDiv) return;
+
+        resultsDiv.innerHTML = `
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Základ dane</h3>
+                <div style="display: grid; gap: 10px;">
+                    <div class="stat-row">
+                        <span>Celkové príjmy:</span>
+                        <strong>€${data.totalIncome.toFixed(2)}</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Výdavky (${data.expenseType === 'pausalne' ? 'paušálne 40%' : 'skutočné'}):</span>
+                        <strong>- €${data.expenses.toFixed(2)}</strong>
+                    </div>
+                    <div class="stat-row" style="border-top: 2px solid #667eea; padding-top: 10px; margin-top: 10px;">
+                        <span>Základ dane:</span>
+                        <strong style="color: #667eea; font-size: 1.2em;">€${data.taxBase.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Daň z príjmov (19%)</h3>
+                <div style="display: grid; gap: 10px;">
+                    <div class="stat-row">
+                        <span>Základ dane:</span>
+                        <span>€${data.taxBase.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Nezdaniteľná časť:</span>
+                        <span>- €${data.nontaxableAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Zdaniteľný príjem:</span>
+                        <span>€${data.taxableIncome.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Daň (19%):</span>
+                        <span>€${(data.taxableIncome * data.taxRate).toFixed(2)}</span>
+                    </div>
+                    ${data.taxBonusAmount > 0 ? `
+                    <div class="stat-row" style="color: #4CAF50;">
+                        <span>Daňový bonus (${data.childrenCount} ${data.childrenCount === 1 ? 'dieťa' : 'deti'}):</span>
+                        <span>- €${data.taxBonusAmount.toFixed(2)}</span>
+                    </div>
+                    ` : ''}
+                    <div class="stat-row" style="border-top: 2px solid #667eea; padding-top: 10px; margin-top: 10px;">
+                        <span>Daň z príjmov celkom:</span>
+                        <strong style="color: #667eea;">€${data.incomeTax.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Sociálne poistenie</h3>
+                <div style="display: grid; gap: 10px;">
+                    <div class="stat-row">
+                        <span>Starobné poistenie (18%):</span>
+                        <span>€${data.oldAgePension.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Invalidné poistenie (6%):</span>
+                        <span>€${data.disabilityPension.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Garančné poistenie (0.25%):</span>
+                        <span>€${data.guaranteeFund.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Rezervný fond (4.75%):</span>
+                        <span>€${data.reserveFund.toFixed(2)}</span>
+                    </div>
+                    <div class="stat-row" style="border-top: 2px solid #667eea; padding-top: 10px; margin-top: 10px;">
+                        <span>Sociálne poistenie celkom:</span>
+                        <strong style="color: #667eea;">€${data.totalSocialInsurance.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Zdravotné poistenie</h3>
+                <div style="display: grid; gap: 10px;">
+                    <div class="stat-row">
+                        <span>Zdravotné poistenie (14%):</span>
+                        <strong style="color: #667eea;">€${data.healthInsurance.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tax-summary">
+                <h2 style="margin-bottom: 20px; text-align: center;">Celkový prehľad</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-label">Celkové príjmy</div>
+                        <div class="summary-value">€${data.totalIncome.toFixed(2)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Celkové dane</div>
+                        <div class="summary-value">€${data.totalTaxes.toFixed(2)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Čistý príjem</div>
+                        <div class="summary-value">€${data.netIncome.toFixed(2)}</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px; font-size: 1.1em;">
+                    <strong>Mesačný čistý príjem: €${data.monthlyNet.toFixed(2)}</strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <canvas id="taxBreakdownChart" style="max-height: 400px;"></canvas>
+            </div>
+        `;
+
+        // Create tax breakdown chart
+        this.createTaxBreakdownChart(data);
+
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Create tax breakdown pie chart
+    createTaxBreakdownChart(data) {
+        const ctx = document.getElementById('taxBreakdownChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+
+        // Destroy existing chart if exists
+        if (this.charts.taxBreakdown) {
+            this.charts.taxBreakdown.destroy();
+        }
+
+        this.charts.taxBreakdown = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    'Čistý príjem',
+                    'Daň z príjmov',
+                    'Sociálne poistenie',
+                    'Zdravotné poistenie',
+                    'Výdavky'
+                ],
+                datasets: [{
+                    data: [
+                        data.netIncome,
+                        data.incomeTax,
+                        data.totalSocialInsurance,
+                        data.healthInsurance,
+                        data.expenses
+                    ],
+                    backgroundColor: [
+                        '#4CAF50',
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 }
 
