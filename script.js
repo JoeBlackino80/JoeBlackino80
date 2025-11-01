@@ -20,6 +20,8 @@ class InvoiceSystem {
         this.initTaxCalculator();
         this.renderCompanyCards();
         this.updateCompanySelector();
+        this.initDarkMode();
+        this.initDatabase();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -1848,6 +1850,58 @@ class InvoiceSystem {
                 }
             }
         });
+    }
+
+    // Initialize dark mode
+    initDarkMode() {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (!darkModeToggle) return;
+
+        // Load dark mode preference
+        const darkMode = localStorage.getItem('darkMode') === 'true';
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        }
+
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            darkModeToggle.textContent = isDark ? '☀️' : '🌙';
+
+            this.showNotification(
+                isDark ? 'Tmavý režim zapnutý' : 'Svetlý režim zapnutý',
+                isDark ? 'Prepli ste sa na tmavý režim' : 'Prepli ste sa na svetlý režim',
+                'success'
+            );
+        });
+
+        console.log('Dark mode initialized:', darkMode);
+    }
+
+    // Initialize IndexedDB
+    async initDatabase() {
+        if (typeof window.db === 'undefined') {
+            console.warn('IndexedDB not available, using localStorage fallback');
+            return;
+        }
+
+        try {
+            await window.db.init();
+            console.log('IndexedDB initialized successfully');
+
+            // Migrate data from localStorage if needed
+            const migrated = localStorage.getItem('dbMigrated');
+            if (!migrated) {
+                await window.db.migrateFromLocalStorage();
+                localStorage.setItem('dbMigrated', 'true');
+                console.log('Data migrated to IndexedDB');
+            }
+        } catch (error) {
+            console.error('Failed to initialize IndexedDB:', error);
+        }
     }
 }
 

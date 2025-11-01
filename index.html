@@ -23,10 +23,13 @@
             <button class="nav-item active" data-page="dashboard">Dashboard</button>
             <button class="nav-item" data-page="invoices">Faktúry</button>
             <button class="nav-item" data-page="clients">Klienti</button>
+            <button class="nav-item" data-page="products">Produkty</button>
+            <button class="nav-item" data-page="projects">Projekty</button>
             <button class="nav-item" data-page="vat">DPH</button>
-            <button class="nav-item" data-page="tax-calculator">Daňový kalkulátor</button>
+            <button class="nav-item" data-page="tax-calculator">Kalkulátor</button>
             <button class="nav-item" data-page="reports">Reporty</button>
             <button class="nav-item" data-page="settings">Nastavenia</button>
+            <button class="btn btn-secondary btn-small" id="darkModeToggle" style="margin-left: auto;">🌙</button>
         </div>
     </nav>
 
@@ -1241,6 +1244,165 @@
         </div>
         <!-- End Settings Page -->
 
+        <!-- Products/Services Page -->
+        <div class="page" id="products">
+            <div class="header">
+                <h1>Produkty a Služby</h1>
+                <p>Správa cenníka položiek</p>
+                <button class="btn btn-primary" data-modal="productModal">Pridať položku</button>
+            </div>
+
+            <!-- Product Categories -->
+            <div class="tabs">
+                <button class="tab active" data-tab="all-products">Všetky</button>
+                <button class="tab" data-tab="services">Služby</button>
+                <button class="tab" data-tab="goods">Tovar</button>
+            </div>
+
+            <!-- Products Table -->
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Názov</th>
+                            <th>Kategória</th>
+                            <th>Jednotka</th>
+                            <th>Cena bez DPH</th>
+                            <th>DPH</th>
+                            <th>Cena s DPH</th>
+                            <th>Sklad</th>
+                            <th>Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <tr>
+                            <td><strong>Vývoj webovej aplikácie</strong></td>
+                            <td><span class="badge badge-info">Služba</span></td>
+                            <td>hod</td>
+                            <td>€50.00</td>
+                            <td>20%</td>
+                            <td><strong>€60.00</strong></td>
+                            <td>-</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Upraviť</button>
+                                <button class="btn btn-danger btn-small">Zmazať</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Grafický dizajn</strong></td>
+                            <td><span class="badge badge-info">Služba</span></td>
+                            <td>hod</td>
+                            <td>€40.00</td>
+                            <td>20%</td>
+                            <td><strong>€48.00</strong></td>
+                            <td>-</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Upraviť</button>
+                                <button class="btn btn-danger btn-small">Zmazať</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Marketingová konzultácia</strong></td>
+                            <td><span class="badge badge-info">Služba</span></td>
+                            <td>hod</td>
+                            <td>€60.00</td>
+                            <td>20%</td>
+                            <td><strong>€72.00</strong></td>
+                            <td>-</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Upraviť</button>
+                                <button class="btn btn-danger btn-small">Zmazať</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Projects Page -->
+        <div class="page" id="projects">
+            <div class="header">
+                <h1>Projekty</h1>
+                <p>Správa projektov a time tracking</p>
+                <button class="btn btn-primary" data-modal="projectModal">Nový projekt</button>
+            </div>
+
+            <!-- Project Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Aktívne projekty</h4>
+                    <p class="stat-number">3</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Dokončené</h4>
+                    <p class="stat-number">12</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Odpracované hodiny</h4>
+                    <p class="stat-number">245h</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Celková hodnota</h4>
+                    <p class="stat-number">€12,450</p>
+                </div>
+            </div>
+
+            <!-- Projects Table -->
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Projekt</th>
+                            <th>Klient</th>
+                            <th>Stav</th>
+                            <th>Rozpočet</th>
+                            <th>Odpracované</th>
+                            <th>Deadline</th>
+                            <th>Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTableBody">
+                        <tr>
+                            <td><strong>Redesign webstránky</strong></td>
+                            <td>ACME s.r.o.</td>
+                            <td><span class="badge badge-warning">V procese</span></td>
+                            <td>€5,000</td>
+                            <td>45h / 80h</td>
+                            <td>15.12.2025</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Detail</button>
+                                <button class="btn btn-primary btn-small">+ Čas</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mobilná aplikácia</strong></td>
+                            <td>Tech Solutions s.r.o.</td>
+                            <td><span class="badge badge-warning">V procese</span></td>
+                            <td>€12,000</td>
+                            <td>120h / 200h</td>
+                            <td>31.01.2026</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Detail</button>
+                                <button class="btn btn-primary btn-small">+ Čas</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>SEO optimalizácia</strong></td>
+                            <td>Digital Marketing s.r.o.</td>
+                            <td><span class="badge badge-success">Dokončený</span></td>
+                            <td>€2,500</td>
+                            <td>50h / 50h</td>
+                            <td>30.11.2025</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Detail</button>
+                                <button class="btn btn-success btn-small">Fakturovať</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <!-- Modal - New Invoice -->
@@ -1909,6 +2071,7 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="database.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
