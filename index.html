@@ -7,12 +7,28 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>Fakturačný Systém</h1>
-            <p>Komplexný offline nástroj pre SZČO na Slovensku</p>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h2>Fakturačný Systém</h2>
         </div>
+        <div class="nav-menu">
+            <button class="nav-item active" data-page="dashboard">Dashboard</button>
+            <button class="nav-item" data-page="invoices">Faktúry</button>
+            <button class="nav-item" data-page="clients">Klienti</button>
+            <button class="nav-item" data-page="vat">DPH</button>
+            <button class="nav-item" data-page="reports">Reporty</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div class="page active" id="dashboard">
+            <!-- Header -->
+            <div class="header">
+                <h1>Dashboard</h1>
+                <p>Prehľad vášho podnikania</p>
+            </div>
 
         <!-- Statistics -->
         <div class="stats">
@@ -162,6 +178,382 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- End Dashboard Page -->
+
+        <!-- Clients Page -->
+        <div class="page" id="clients">
+            <div class="header">
+                <h1>Klienti</h1>
+                <p>Správa obchodných partnerov</p>
+            </div>
+
+            <div class="action-buttons" style="margin-bottom: 30px;">
+                <button class="btn btn-primary" data-modal="clientModal">Pridať nového klienta</button>
+                <button class="btn btn-secondary" id="exportClientsBtn">Export klientov</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Zoznam klientov</h2>
+                    <div class="search-box">
+                        <input type="text" id="clientSearch" placeholder="Hľadať klienta...">
+                    </div>
+                </div>
+
+                <table class="table" id="clientsTable">
+                    <thead>
+                        <tr>
+                            <th>Názov</th>
+                            <th>IČO</th>
+                            <th>IČ DPH</th>
+                            <th>Email</th>
+                            <th>Faktúr</th>
+                            <th>Celkový obrat</th>
+                            <th>Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsBody">
+                        <tr>
+                            <td><strong>ACME s.r.o.</strong></td>
+                            <td>12345678</td>
+                            <td>SK1234567890</td>
+                            <td>info@acme.sk</td>
+                            <td>8</td>
+                            <td>€4,200.00</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="viewClient" data-client-id="1">Detail</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tech Solutions s.r.o.</strong></td>
+                            <td>23456789</td>
+                            <td>SK2345678901</td>
+                            <td>contact@techsol.sk</td>
+                            <td>5</td>
+                            <td>€8,750.00</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="viewClient" data-client-id="2">Detail</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Digital Marketing s.r.o.</strong></td>
+                            <td>34567890</td>
+                            <td>SK3456789012</td>
+                            <td>hello@digmarketing.sk</td>
+                            <td>3</td>
+                            <td>€2,500.00</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="viewClient" data-client-id="3">Detail</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>StartUp XYZ</strong></td>
+                            <td>45678901</td>
+                            <td>-</td>
+                            <td>info@startupxyz.sk</td>
+                            <td>1</td>
+                            <td>€5,200.00</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" data-action="viewClient" data-client-id="4">Detail</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- End Clients Page -->
+
+        <!-- VAT Page -->
+        <div class="page" id="vat">
+            <div class="header">
+                <h1>DPH Evidencia</h1>
+                <p>Prehľad dane z pridanej hodnoty</p>
+            </div>
+
+            <!-- VAT Period Selector -->
+            <div class="panel" style="margin-bottom: 30px;">
+                <div class="vat-period-selector">
+                    <label>Vyberte obdobie:</label>
+                    <select id="vatPeriod">
+                        <option value="2025-10">Október 2025</option>
+                        <option value="2025-09">September 2025</option>
+                        <option value="2025-08">August 2025</option>
+                        <option value="2025-Q3">Q3 2025 (Štvrťrok)</option>
+                        <option value="2025">Celý rok 2025</option>
+                    </select>
+                    <button class="btn btn-primary" id="calculateVatBtn">Vypočítať DPH</button>
+                    <button class="btn btn-secondary" id="exportVatBtn">Export výkazu</button>
+                </div>
+            </div>
+
+            <!-- VAT Summary Cards -->
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>DPH na výstupe (predaj)</h3>
+                    <div class="value">€2,490.00</div>
+                    <div class="change">Z tržieb €12,450</div>
+                </div>
+                <div class="stat-card">
+                    <h3>DPH na vstupe (nákup)</h3>
+                    <div class="value">€420.00</div>
+                    <div class="change">Z nákladov €2,100</div>
+                </div>
+                <div class="stat-card warning">
+                    <h3>DPH na odvod</h3>
+                    <div class="value">€2,070.00</div>
+                    <div class="change">Výstup - Vstup</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Splatnosť</h3>
+                    <div class="value">25.11.2025</div>
+                    <div class="change">Do 25. dňa nasl. mesiaca</div>
+                </div>
+            </div>
+
+            <!-- VAT Tables -->
+            <div class="vat-tables">
+                <div class="panel">
+                    <h2>DPH na výstupe (Vystavené faktúry)</h2>
+
+                    <div class="vat-summary-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sadzba DPH</th>
+                                    <th>Základ (bez DPH)</th>
+                                    <th>DPH</th>
+                                    <th>Celkom s DPH</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>20%</strong></td>
+                                    <td>€10,200.00</td>
+                                    <td>€2,040.00</td>
+                                    <td>€12,240.00</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10%</strong></td>
+                                    <td>€1,500.00</td>
+                                    <td>€150.00</td>
+                                    <td>€1,650.00</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>0%</strong></td>
+                                    <td>€300.00</td>
+                                    <td>€0.00</td>
+                                    <td>€300.00</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td><strong>SPOLU</strong></td>
+                                    <td><strong>€12,000.00</strong></td>
+                                    <td><strong>€2,190.00</strong></td>
+                                    <td><strong>€14,190.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Detail faktúr</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Číslo</th>
+                                <th>Dátum</th>
+                                <th>Klient</th>
+                                <th>Základ</th>
+                                <th>DPH</th>
+                                <th>Celkom</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vatOutputDetails">
+                            <tr>
+                                <td>2025-0042</td>
+                                <td>27.10.2025</td>
+                                <td>ACME s.r.o.</td>
+                                <td>€1,000.00</td>
+                                <td>€200.00</td>
+                                <td>€1,200.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-0041</td>
+                                <td>25.10.2025</td>
+                                <td>Tech Solutions s.r.o.</td>
+                                <td>€2,916.67</td>
+                                <td>€583.33</td>
+                                <td>€3,500.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-0040</td>
+                                <td>20.10.2025</td>
+                                <td>Digital Marketing s.r.o.</td>
+                                <td>€708.33</td>
+                                <td>€141.67</td>
+                                <td>€850.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel" style="margin-top: 30px;">
+                    <h2>DPH na vstupe (Prijaté faktúry / Náklady)</h2>
+
+                    <div class="vat-summary-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sadzba DPH</th>
+                                    <th>Základ (bez DPH)</th>
+                                    <th>DPH</th>
+                                    <th>Celkom s DPH</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>20%</strong></td>
+                                    <td>€1,750.00</td>
+                                    <td>€350.00</td>
+                                    <td>€2,100.00</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10%</strong></td>
+                                    <td>€636.36</td>
+                                    <td>€63.64</td>
+                                    <td>€700.00</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>0%</strong></td>
+                                    <td>€50.00</td>
+                                    <td>€0.00</td>
+                                    <td>€50.00</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td><strong>SPOLU</strong></td>
+                                    <td><strong>€2,436.36</strong></td>
+                                    <td><strong>€413.64</strong></td>
+                                    <td><strong>€2,850.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Detail nákladov</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Dátum</th>
+                                <th>Popis</th>
+                                <th>Kategória</th>
+                                <th>Základ</th>
+                                <th>DPH</th>
+                                <th>Celkom</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vatInputDetails">
+                            <tr>
+                                <td>15.10.2025</td>
+                                <td>Kancelárske priestory</td>
+                                <td>Nájom</td>
+                                <td>€500.00</td>
+                                <td>€100.00</td>
+                                <td>€600.00</td>
+                            </tr>
+                            <tr>
+                                <td>12.10.2025</td>
+                                <td>Webhosting a domény</td>
+                                <td>Služby</td>
+                                <td>€83.33</td>
+                                <td>€16.67</td>
+                                <td>€100.00</td>
+                            </tr>
+                            <tr>
+                                <td>08.10.2025</td>
+                                <td>Adobe Creative Cloud</td>
+                                <td>Služby</td>
+                                <td>€41.67</td>
+                                <td>€8.33</td>
+                                <td>€50.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- End VAT Page -->
+
+        <!-- Reports Page -->
+        <div class="page" id="reports">
+            <div class="header">
+                <h1>Reporty a Export</h1>
+                <p>Export dát a prehľady</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Dostupné exporty</h3>
+                    <div class="value">8</div>
+                    <div class="change">typov reportov</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Posledný export</h3>
+                    <div class="value">Dnes</div>
+                    <div class="change">DPH výkaz</div>
+                </div>
+            </div>
+
+            <div class="export-grid">
+                <div class="export-card">
+                    <h3>Faktúry - CSV</h3>
+                    <p>Export všetkých faktúr do CSV formátu</p>
+                    <button class="btn btn-primary" data-export="invoices-csv">Stiahnuť CSV</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Faktúry - Excel</h3>
+                    <p>Export všetkých faktúr do XLSX formátu</p>
+                    <button class="btn btn-primary" data-export="invoices-xlsx">Stiahnuť Excel</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Klienti - CSV</h3>
+                    <p>Export databázy klientov</p>
+                    <button class="btn btn-primary" data-export="clients-csv">Stiahnuť CSV</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>DPH výkaz</h3>
+                    <p>Sumár DPH za vybrané obdobie</p>
+                    <button class="btn btn-primary" data-export="vat-report">Stiahnuť report</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Náklady - CSV</h3>
+                    <p>Export všetkých evidovaných nákladov</p>
+                    <button class="btn btn-primary" data-export="expenses-csv">Stiahnuť CSV</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Ročný prehľad</h3>
+                    <p>Komplexný report za celý rok</p>
+                    <button class="btn btn-primary" data-export="yearly-report">Stiahnuť PDF</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Backup databázy</h3>
+                    <p>Záloha všetkých dát (JSON)</p>
+                    <button class="btn btn-success" data-export="backup">Zálohovať</button>
+                </div>
+
+                <div class="export-card">
+                    <h3>Obnovenie dát</h3>
+                    <p>Import z predchádzajúcej zálohy</p>
+                    <button class="btn btn-secondary" id="restoreBtn">Obnoviť</button>
+                </div>
+            </div>
+        </div>
+        <!-- End Reports Page -->
+
     </div>
 
     <!-- Modal - New Invoice -->
@@ -443,6 +835,215 @@
 
                 <button type="submit" class="btn btn-primary btn-full">Uložiť náklad</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal - Client Detail -->
+    <div class="modal" id="clientDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="clientDetailName">Detail klienta</h3>
+                <button class="close-btn" data-close="clientDetailModal">&times;</button>
+            </div>
+
+            <div class="client-detail-tabs">
+                <button class="tab active" data-client-tab="info">Informácie</button>
+                <button class="tab" data-client-tab="invoices">Faktúry</button>
+                <button class="tab" data-client-tab="stats">Štatistiky</button>
+            </div>
+
+            <div class="client-detail-content">
+                <!-- Info Tab -->
+                <div class="client-tab-content active" id="clientInfoTab">
+                    <div class="client-info-grid">
+                        <div>
+                            <label>Názov:</label>
+                            <p id="clientInfoName">-</p>
+                        </div>
+                        <div>
+                            <label>IČO:</label>
+                            <p id="clientInfoIco">-</p>
+                        </div>
+                        <div>
+                            <label>DIČ:</label>
+                            <p id="clientInfoDic">-</p>
+                        </div>
+                        <div>
+                            <label>IČ DPH:</label>
+                            <p id="clientInfoIcdph">-</p>
+                        </div>
+                        <div>
+                            <label>Adresa:</label>
+                            <p id="clientInfoAddress">-</p>
+                        </div>
+                        <div>
+                            <label>Email:</label>
+                            <p id="clientInfoEmail">-</p>
+                        </div>
+                        <div>
+                            <label>IBAN:</label>
+                            <p id="clientInfoIban">-</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-secondary">Upraviť</button>
+                        <button class="btn btn-danger">Odstrániť</button>
+                    </div>
+                </div>
+
+                <!-- Invoices Tab -->
+                <div class="client-tab-content" id="clientInvoicesTab">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Číslo</th>
+                                <th>Dátum</th>
+                                <th>Suma</th>
+                                <th>Status</th>
+                                <th>Akcie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientInvoicesBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Stats Tab -->
+                <div class="client-tab-content" id="clientStatsTab">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3>Celkový obrat</h3>
+                            <div class="value" id="clientStatRevenue">€0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Počet faktúr</h3>
+                            <div class="value" id="clientStatInvoices">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Priemerná faktúra</h3>
+                            <div class="value" id="clientStatAverage">€0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Posledná faktúra</h3>
+                            <div class="value" id="clientStatLast">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - PDF Preview -->
+    <div class="modal" id="pdfPreviewModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Náhľad faktúry</h3>
+                <button class="close-btn" data-close="pdfPreviewModal">&times;</button>
+            </div>
+
+            <div class="pdf-toolbar">
+                <button class="btn btn-primary" id="downloadPdfBtn">Stiahnuť PDF</button>
+                <button class="btn btn-secondary" id="printPdfBtn">Tlačiť</button>
+                <button class="btn btn-secondary" id="emailPdfBtn">Odoslať emailom</button>
+            </div>
+
+            <div class="pdf-preview" id="pdfPreview">
+                <!-- PDF content will be rendered here -->
+                <div class="invoice-preview">
+                    <div class="invoice-header-preview">
+                        <div>
+                            <h2>FAKTÚRA</h2>
+                            <p>Číslo: <strong id="previewInvoiceNumber">2025-0001</strong></p>
+                        </div>
+                        <div class="invoice-logo">
+                            <p>LOGO</p>
+                        </div>
+                    </div>
+
+                    <div class="invoice-parties">
+                        <div class="invoice-party">
+                            <h4>Dodávateľ:</h4>
+                            <p><strong>Vaša firma SZČO</strong></p>
+                            <p>IČO: 12345678</p>
+                            <p>DIČ: 1234567890</p>
+                            <p>IČ DPH: SK1234567890</p>
+                            <p>Adresa, 811 01 Bratislava</p>
+                        </div>
+                        <div class="invoice-party">
+                            <h4>Odberateľ:</h4>
+                            <p><strong id="previewClientName">Klient s.r.o.</strong></p>
+                            <p>IČO: <span id="previewClientIco">-</span></p>
+                            <p>DIČ: <span id="previewClientDic">-</span></p>
+                            <p>IČ DPH: <span id="previewClientIcdph">-</span></p>
+                            <p id="previewClientAddress">Adresa</p>
+                        </div>
+                    </div>
+
+                    <div class="invoice-details">
+                        <table>
+                            <tr>
+                                <td>Dátum vystavenia:</td>
+                                <td><strong id="previewIssueDate">01.11.2025</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Dátum splatnosti:</td>
+                                <td><strong id="previewDueDate">15.11.2025</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Forma úhrady:</td>
+                                <td>Bankový prevod</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <table class="invoice-items-table">
+                        <thead>
+                            <tr>
+                                <th>Položka</th>
+                                <th>Množstvo</th>
+                                <th>Jednotka</th>
+                                <th>Cena bez DPH</th>
+                                <th>DPH</th>
+                                <th>Celkom</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewItemsBody">
+                            <tr>
+                                <td>Vývoj webovej aplikácie</td>
+                                <td>20</td>
+                                <td>hod</td>
+                                <td>€50.00</td>
+                                <td>20%</td>
+                                <td>€1,200.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="invoice-summary-preview">
+                        <table>
+                            <tr>
+                                <td>Celkom bez DPH:</td>
+                                <td><strong id="previewTotalWithoutVat">€1,000.00</strong></td>
+                            </tr>
+                            <tr>
+                                <td>DPH:</td>
+                                <td><strong id="previewTotalVat">€200.00</strong></td>
+                            </tr>
+                            <tr class="total">
+                                <td>Celkom s DPH:</td>
+                                <td><strong id="previewTotalWithVat">€1,200.00</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="invoice-payment-info">
+                        <p><strong>Platobné údaje:</strong></p>
+                        <p>IBAN: SK3112000000198742637541</p>
+                        <p>Variabilný symbol: <span id="previewVs">20250001</span></p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

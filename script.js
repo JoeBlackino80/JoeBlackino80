@@ -1,12 +1,68 @@
 // Invoice System Application
 class InvoiceSystem {
     constructor() {
+        this.currentPage = 'dashboard';
+        this.mockClients = this.initMockClients();
+        this.mockInvoices = this.initMockInvoices();
+
         this.initEventListeners();
         this.initValidation();
+        this.initNavigation();
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
         console.log('Offline režim: AKTÍVNY');
         console.log('Dáta uložené lokálne v SQLite databáze');
+    }
+
+    // Initialize mock data
+    initMockClients() {
+        return [
+            { id: 1, name: 'ACME s.r.o.', ico: '12345678', dic: '1234567890', icdph: 'SK1234567890', email: 'info@acme.sk', address: 'Hlavná 123, 811 01 Bratislava', iban: 'SK3112000000198742637541', invoiceCount: 8, totalRevenue: 4200 },
+            { id: 2, name: 'Tech Solutions s.r.o.', ico: '23456789', dic: '2345678901', icdph: 'SK2345678901', email: 'contact@techsol.sk', address: 'Nová 45, 821 05 Bratislava', iban: 'SK4212000000198742637542', invoiceCount: 5, totalRevenue: 8750 },
+            { id: 3, name: 'Digital Marketing s.r.o.', ico: '34567890', dic: '3456789012', icdph: 'SK3456789012', email: 'hello@digmarketing.sk', address: 'Moderná 78, 811 03 Bratislava', iban: 'SK5312000000198742637543', invoiceCount: 3, totalRevenue: 2500 },
+            { id: 4, name: 'StartUp XYZ', ico: '45678901', dic: '4567890123', icdph: '-', email: 'info@startupxyz.sk', address: 'Inovatívna 90, 821 09 Bratislava', iban: 'SK6412000000198742637544', invoiceCount: 1, totalRevenue: 5200 }
+        ];
+    }
+
+    initMockInvoices() {
+        return [
+            { id: 1, number: '2025-0042', clientId: 1, date: '27.10.2025', amount: 1200, status: 'paid', base: 1000, vat: 200 },
+            { id: 2, number: '2025-0041', clientId: 2, date: '25.10.2025', amount: 3500, status: 'issued', base: 2916.67, vat: 583.33 },
+            { id: 3, number: '2025-0040', clientId: 3, date: '20.10.2025', amount: 850, status: 'overdue', base: 708.33, vat: 141.67 }
+        ];
+    }
+
+    // Initialize navigation
+    initNavigation() {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const page = e.currentTarget.getAttribute('data-page');
+                this.navigateTo(page);
+            });
+        });
+    }
+
+    // Navigate between pages
+    navigateTo(page) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+        // Show selected page
+        const targetPage = document.getElementById(page);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+
+        // Update navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-page') === page) {
+                item.classList.add('active');
+            }
+        });
+
+        this.currentPage = page;
+        console.log('Navigated to:', page);
     }
 
     // Initialize all event listeners
@@ -39,7 +95,10 @@ class InvoiceSystem {
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                this.switchTab(e.currentTarget);
+                const tabGroup = e.currentTarget.closest('.tabs') || e.currentTarget.closest('.client-detail-tabs');
+                if (tabGroup) {
+                    this.switchTab(e.currentTarget, tabGroup);
+                }
             });
         });
 
@@ -58,10 +117,26 @@ class InvoiceSystem {
             });
         });
 
+        // Client actions
+        document.querySelectorAll('[data-action="viewClient"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const clientId = parseInt(e.currentTarget.getAttribute('data-client-id'));
+                this.viewClientDetail(clientId);
+            });
+        });
+
         // Report action
         document.querySelectorAll('[data-action="report"]').forEach(button => {
             button.addEventListener('click', () => {
-                this.generateReport();
+                this.navigateTo('reports');
+            });
+        });
+
+        // Export actions
+        document.querySelectorAll('[data-export]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const exportType = e.currentTarget.getAttribute('data-export');
+                this.handleExport(exportType);
             });
         });
 
@@ -114,6 +189,42 @@ class InvoiceSystem {
                 stockGroup.style.display = e.target.checked ? 'block' : 'none';
             });
         }
+
+        // Client search
+        const clientSearch = document.getElementById('clientSearch');
+        if (clientSearch) {
+            clientSearch.addEventListener('input', (e) => this.searchClients(e.target.value));
+        }
+
+        // VAT calculations
+        const calculateVatBtn = document.getElementById('calculateVatBtn');
+        if (calculateVatBtn) {
+            calculateVatBtn.addEventListener('click', () => this.calculateVAT());
+        }
+
+        const exportVatBtn = document.getElementById('exportVatBtn');
+        if (exportVatBtn) {
+            exportVatBtn.addEventListener('click', () => this.exportVATReport());
+        }
+
+        // PDF actions
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        if (downloadPdfBtn) {
+            downloadPdfBtn.addEventListener('click', () => this.downloadPDF());
+        }
+
+        const printPdfBtn = document.getElementById('printPdfBtn');
+        if (printPdfBtn) {
+            printPdfBtn.addEventListener('click', () => this.printPDF());
+        }
+
+        // Client detail tabs
+        document.querySelectorAll('[data-client-tab]').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.currentTarget.getAttribute('data-client-tab');
+                this.switchClientTab(tabName);
+            });
+        });
     }
 
     // Initialize validation
@@ -219,15 +330,16 @@ class InvoiceSystem {
     }
 
     // Tab switching
-    switchTab(tabElement) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    switchTab(tabElement, tabGroup) {
+        const tabs = tabGroup.querySelectorAll('.tab');
+        tabs.forEach(t => t.classList.remove('active'));
         tabElement.classList.add('active');
 
         const tabName = tabElement.getAttribute('data-tab');
-        console.log('Prepínanie na záložku:', tabName);
-
-        // Here you would filter the documents table based on the tab
-        this.filterDocuments(tabName);
+        if (tabName) {
+            console.log('Prepínanie na záložku:', tabName);
+            this.filterDocuments(tabName);
+        }
     }
 
     // Filter documents by tab
@@ -257,6 +369,73 @@ class InvoiceSystem {
                     row.style.display = '';
             }
         });
+    }
+
+    // Search clients
+    searchClients(query) {
+        const rows = document.querySelectorAll('#clientsBody tr');
+        const lowerQuery = query.toLowerCase();
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(lowerQuery) ? '' : 'none';
+        });
+    }
+
+    // View client detail
+    viewClientDetail(clientId) {
+        const client = this.mockClients.find(c => c.id === clientId);
+        if (!client) return;
+
+        // Fill client info
+        document.getElementById('clientDetailName').textContent = client.name;
+        document.getElementById('clientInfoName').textContent = client.name;
+        document.getElementById('clientInfoIco').textContent = client.ico;
+        document.getElementById('clientInfoDic').textContent = client.dic;
+        document.getElementById('clientInfoIcdph').textContent = client.icdph;
+        document.getElementById('clientInfoAddress').textContent = client.address;
+        document.getElementById('clientInfoEmail').textContent = client.email;
+        document.getElementById('clientInfoIban').textContent = client.iban;
+
+        // Fill stats
+        document.getElementById('clientStatRevenue').textContent = '€' + client.totalRevenue.toFixed(2);
+        document.getElementById('clientStatInvoices').textContent = client.invoiceCount;
+        document.getElementById('clientStatAverage').textContent = '€' + (client.totalRevenue / client.invoiceCount).toFixed(2);
+        document.getElementById('clientStatLast').textContent = '27.10.2025';
+
+        // Fill invoices
+        const clientInvoices = this.mockInvoices.filter(inv => inv.clientId === clientId);
+        const invoicesBody = document.getElementById('clientInvoicesBody');
+        invoicesBody.innerHTML = clientInvoices.map(inv => `
+            <tr>
+                <td>${inv.number}</td>
+                <td>${inv.date}</td>
+                <td>€${inv.amount.toFixed(2)}</td>
+                <td><span class="badge badge-${inv.status === 'paid' ? 'success' : 'warning'}">${inv.status === 'paid' ? 'Uhradená' : 'Vystavená'}</span></td>
+                <td><button class="btn btn-secondary btn-small" onclick="invoiceSystem.viewDocument('${inv.number}')">Zobraziť</button></td>
+            </tr>
+        `).join('');
+
+        this.openModal('clientDetailModal');
+    }
+
+    // Switch client detail tabs
+    switchClientTab(tabName) {
+        document.querySelectorAll('[data-client-tab]').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.getAttribute('data-client-tab') === tabName) {
+                tab.classList.add('active');
+            }
+        });
+
+        document.querySelectorAll('.client-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        const targetTab = document.getElementById('client' + tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab');
+        if (targetTab) {
+            targetTab.classList.add('active');
+        }
     }
 
     // Form submissions
@@ -418,11 +597,8 @@ class InvoiceSystem {
         console.log('GET /api/v1/documents/{id}');
         console.log('GET /api/v1/documents/{id}/pdf');
 
-        this.showNotification(
-            'Zobrazenie dokladu: ' + docNumber,
-            'Môžete zobraziť detail, stiahnuť PDF, duplikovať alebo označiť ako uhradenú.',
-            'info'
-        );
+        // Open PDF preview modal
+        this.openModal('pdfPreviewModal');
     }
 
     // Convert offer to invoice
@@ -436,23 +612,59 @@ class InvoiceSystem {
         }
     }
 
-    // Generate report
-    generateReport() {
-        const reportType = prompt('Vyberte typ reportu:\n\n1 - Faktúry po splatnosti\n2 - Prehľad obratu\n3 - Sumár DPH\n4 - Export do CSV\n\nZadajte číslo (1-4):');
+    // Calculate VAT
+    calculateVAT() {
+        const period = document.getElementById('vatPeriod').value;
+        console.log('Calculating VAT for period:', period);
+        console.log('API Endpoint: GET /api/v1/vat/calculate?period=' + period);
 
-        const reports = {
-            '1': 'GET /api/v1/reports/overdue',
-            '2': 'GET /api/v1/reports/revenue',
-            '3': 'GET /api/v1/reports/vat-summary',
-            '4': 'GET /api/v1/reports/export-csv'
+        this.showNotification('DPH vypočítané', 'Výpočet DPH pre obdobie ' + period + ' bol dokončený.', 'success');
+    }
+
+    // Export VAT report
+    exportVATReport() {
+        const period = document.getElementById('vatPeriod').value;
+        console.log('Exporting VAT report for period:', period);
+        console.log('API Endpoint: GET /api/v1/vat/export?period=' + period);
+
+        this.showNotification('Export DPH výkazu', 'Výkaz DPH bol exportovaný.', 'success');
+    }
+
+    // Handle exports
+    handleExport(exportType) {
+        console.log('Exporting:', exportType);
+
+        const exportMap = {
+            'invoices-csv': { api: 'GET /api/v1/exports/invoices/csv', file: 'faktury.csv' },
+            'invoices-xlsx': { api: 'GET /api/v1/exports/invoices/xlsx', file: 'faktury.xlsx' },
+            'clients-csv': { api: 'GET /api/v1/exports/clients/csv', file: 'klienti.csv' },
+            'vat-report': { api: 'GET /api/v1/exports/vat/report', file: 'dph-vykaz.pdf' },
+            'expenses-csv': { api: 'GET /api/v1/exports/expenses/csv', file: 'naklady.csv' },
+            'yearly-report': { api: 'GET /api/v1/exports/yearly/report', file: 'rocny-prehled.pdf' },
+            'backup': { api: 'GET /api/v1/exports/backup', file: 'backup.json' }
         };
 
-        if (reports[reportType]) {
-            console.log('Generovanie reportu...');
-            console.log('API Endpoint:', reports[reportType]);
+        const exportInfo = exportMap[exportType];
+        if (exportInfo) {
+            console.log('API Endpoint:', exportInfo.api);
+            this.showNotification('Export úspešný', 'Súbor ' + exportInfo.file + ' bol stiahnutý.', 'success');
 
-            this.showNotification('Generovanie reportu...', 'Report bude vygenerovaný a pripravený na export.', 'info');
+            // In a real app, trigger actual download
+            // this.downloadFile(exportInfo.file, data);
         }
+    }
+
+    // Download PDF
+    downloadPDF() {
+        console.log('Downloading PDF...');
+        console.log('API Endpoint: GET /api/v1/documents/{id}/pdf');
+        this.showNotification('PDF stiahnuté', 'Faktúra bola stiahnutá ako PDF.', 'success');
+    }
+
+    // Print PDF
+    printPDF() {
+        console.log('Printing PDF...');
+        window.print();
     }
 
     // Show notification (custom implementation instead of alert)
