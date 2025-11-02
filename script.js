@@ -22,6 +22,7 @@ class InvoiceSystem {
         this.updateCompanySelector();
         this.initDarkMode();
         this.initDatabase();
+        this.initEmailFunctions();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -1901,6 +1902,108 @@ class InvoiceSystem {
             }
         } catch (error) {
             console.error('Failed to initialize IndexedDB:', error);
+        }
+    }
+
+    // Send invoice email
+    sendInvoiceEmail(invoiceNumber) {
+        const invoice = this.filteredInvoices.find(inv => inv.number === invoiceNumber) ||
+                       this.mockInvoices.find(inv => inv.number === invoiceNumber);
+
+        if (invoice) {
+            const client = this.mockClients.find(c => c.id === invoice.clientId);
+            const company = this.companies.find(c => c.id === this.currentCompanyId);
+
+            document.getElementById('emailTo').value = client ? client.email : '';
+            document.getElementById('emailSubject').value = 'Faktúra ' + invoiceNumber + ' - ' + (client ? client.name : '');
+            document.getElementById('emailBody').value = 'Dobrý deň,\n\nv prílohe Vám zasielame faktúru číslo ' + invoiceNumber + ' s dátumom splatnosti ' + (invoice.dueDate || 'neuvedený') + '.\n\nCelková suma: €' + (invoice.total ? invoice.total.toFixed(2) : (invoice.amount ? invoice.amount.toFixed(2) : '0.00')) + '\n\nĎakujeme za spoluprácu.\n\nS pozdravom,\n' + company.name;
+        }
+
+        this.openModal('sendEmailModal');
+    }
+
+    // Initialize email functionality
+    initEmailFunctions() {
+        const sendEmailForm = document.getElementById('sendEmailForm');
+        if (sendEmailForm) {
+            sendEmailForm.addEventListener('submit', (e) => this.handleSendEmail(e));
+        }
+
+        const emailSettingsForm = document.getElementById('emailSettingsForm');
+        if (emailSettingsForm) {
+            emailSettingsForm.addEventListener('submit', (e) => this.saveEmailSettings(e));
+        }
+    }
+
+    // Handle send email
+    handleSendEmail(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const emailData = {
+            to: formData.get('emailTo'),
+            cc: formData.get('emailCc'),
+            subject: formData.get('emailSubject'),
+            body: formData.get('emailBody'),
+            attachPdf: formData.get('attachPdf') === 'on',
+            sendCopyToSelf: formData.get('sendCopyToSelf') === 'on'
+        };
+
+        console.log('Sending email:', emailData);
+        console.log('API Endpoint: POST /api/v1/emails/send');
+
+        setTimeout(() => {
+            this.showNotification(
+                'Email odoslaný',
+                'Faktúra bola úspešne odoslaná na ' + emailData.to,
+                'success'
+            );
+            this.closeModal('sendEmailModal');
+            e.target.reset();
+
+            console.log('Email saved to history:', {
+                ...emailData,
+                sentAt: new Date().toISOString(),
+                status: 'sent'
+            });
+        }, 1000);
+    }
+
+    // Save email settings
+    saveEmailSettings(e) {
+        e.preventDefault();
+        console.log('Saving email settings');
+        console.log('API Endpoint: PUT /api/v1/settings/email');
+        this.showNotification('Nastavenia uložené', 'Email nastavenia boli úspešne uložené.', 'success');
+    }
+
+    // Send payment reminder
+    sendPaymentReminder(invoiceNumber) {
+        const invoice = this.filteredInvoices.find(inv => inv.number === invoiceNumber) ||
+                       this.mockInvoices.find(inv => inv.number === invoiceNumber);
+
+        if (invoice) {
+            const client = this.mockClients.find(c => c.id === invoice.clientId);
+            const company = this.companies.find(c => c.id === this.currentCompanyId);
+
+            const dueDate = new Date(invoice.dueDate.split('.').reverse().join('-'));
+            const today = new Date();
+            const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+
+            const emailData = {
+                to: client ? client.email : '',
+                subject: 'Upomienka - Faktúra ' + invoiceNumber + ' po splatnosti',
+                body: 'Dobrý deň,\n\nupozorňujeme Vás, že faktúra číslo ' + invoiceNumber + ' so splatnosťou ' + invoice.dueDate + ' je ' + daysOverdue + ' dní po splatnosti.\n\nCelková suma: €' + (invoice.total ? invoice.total.toFixed(2) : (invoice.amount ? invoice.amount.toFixed(2) : '0.00')) + '\n\nProsíme o úhradu v najbližších dňoch.\n\nS pozdravom,\n' + company.name
+            };
+
+            console.log('Sending payment reminder:', emailData);
+            console.log('API Endpoint: POST /api/v1/emails/send-reminder');
+
+            this.showNotification(
+                'Upomienka odoslaná',
+                'Upomienka bola odoslaná na ' + emailData.to,
+                'success'
+            );
         }
     }
 }

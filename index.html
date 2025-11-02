@@ -26,6 +26,7 @@
             <button class="nav-item" data-page="products">Produkty</button>
             <button class="nav-item" data-page="projects">Projekty</button>
             <button class="nav-item" data-page="vat">DPH</button>
+            <button class="nav-item" data-page="bank">Banka</button>
             <button class="nav-item" data-page="tax-calculator">Kalkulátor</button>
             <button class="nav-item" data-page="reports">Reporty</button>
             <button class="nav-item" data-page="settings">Nastavenia</button>
@@ -756,6 +757,152 @@
         </div>
         <!-- End VAT Page -->
 
+        <!-- Bank Page -->
+        <div class="page" id="bank">
+            <div class="header">
+                <h1>Bankové výpisy</h1>
+                <p>Import transakcií a automatické párovanie</p>
+            </div>
+
+            <!-- Bank Accounts -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <h4>Primárny účet</h4>
+                    <p class="stat-number">SK31 1200...</p>
+                    <small>€12,450.00</small>
+                </div>
+                <div class="stat-card">
+                    <h4>Transakcie tento mesiac</h4>
+                    <p class="stat-number">24</p>
+                    <small>15 prichádzajúcich</small>
+                </div>
+                <div class="stat-card">
+                    <h4>Nespárované</h4>
+                    <p class="stat-number">3</p>
+                    <small>€2,850.00</small>
+                </div>
+                <div class="stat-card">
+                    <h4>Spárované</h4>
+                    <p class="stat-number">21</p>
+                    <small>€14,600.00</small>
+                </div>
+            </div>
+
+            <!-- Import Section -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h3>Import bankového výpisu</h3>
+                <p style="margin-bottom: 20px;">Nahrajte CSV súbor z vašej banky</p>
+
+                <div class="form-group">
+                    <label>Vyberte banku</label>
+                    <select id="bankType">
+                        <option value="tatra">Tatra banka</option>
+                        <option value="slsp">Slovenská sporiteľňa</option>
+                        <option value="vub">VÚB</option>
+                        <option value="csob">ČSOB</option>
+                        <option value="unicredit">UniCredit Bank</option>
+                        <option value="custom">Vlastný formát CSV</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nahrajte CSV súbor</label>
+                    <input type="file" id="bankCsvFile" accept=".csv">
+                    <small class="form-hint">Podporované formáty: Tatra banka, SLSP, VÚB, ČSOB</small>
+                </div>
+
+                <button class="btn btn-primary" id="importBankBtn">Importovať transakcie</button>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="panel-header">
+                    <h3>Bankové transakcie</h3>
+                    <div class="filters-grid" style="max-width: 600px;">
+                        <select id="transactionStatusFilter">
+                            <option value="">Všetky transakcie</option>
+                            <option value="matched">Spárované</option>
+                            <option value="unmatched">Nespárované</option>
+                        </select>
+                        <input type="date" id="transactionDateFrom" placeholder="Dátum od">
+                        <input type="date" id="transactionDateTo" placeholder="Dátum do">
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dátum</th>
+                            <th>Popis</th>
+                            <th>Suma</th>
+                            <th>Typ</th>
+                            <th>Faktúra</th>
+                            <th>Stav</th>
+                            <th>Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bankTransactionsBody">
+                        <tr>
+                            <td>27.10.2025</td>
+                            <td>ACME s.r.o. - Platba FV 2025-0042</td>
+                            <td style="color: #4CAF50;"><strong>+€1,200.00</strong></td>
+                            <td><span class="badge badge-success">Príjem</span></td>
+                            <td>FV 2025-0042</td>
+                            <td><span class="badge badge-success">Spárované</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" disabled>Spárované</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>25.10.2025</td>
+                            <td>Tech Solutions s.r.o.</td>
+                            <td style="color: #4CAF50;"><strong>+€3,500.00</strong></td>
+                            <td><span class="badge badge-success">Príjem</span></td>
+                            <td>FV 2025-0041</td>
+                            <td><span class="badge badge-success">Spárované</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" disabled>Spárované</button>
+                            </td>
+                        </tr>
+                        <tr style="background: #fff3cd;">
+                            <td>23.10.2025</td>
+                            <td>Neznáma platba</td>
+                            <td style="color: #4CAF50;"><strong>+€850.00</strong></td>
+                            <td><span class="badge badge-success">Príjem</span></td>
+                            <td>-</td>
+                            <td><span class="badge badge-warning">Nespárované</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-small" onclick="invoiceSystem.matchTransaction(1)">Spárovať</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>20.10.2025</td>
+                            <td>Nájomné - kancelária</td>
+                            <td style="color: #f44336;"><strong>-€600.00</strong></td>
+                            <td><span class="badge badge-danger">Výdaj</span></td>
+                            <td>-</td>
+                            <td><span class="badge badge-secondary">Výdaj</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Detail</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>18.10.2025</td>
+                            <td>Energia - E.ON</td>
+                            <td style="color: #f44336;"><strong>-€120.00</strong></td>
+                            <td><span class="badge badge-danger">Výdaj</span></td>
+                            <td>-</td>
+                            <td><span class="badge badge-secondary">Výdaj</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">Detail</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- End Bank Page -->
+
         <!-- Reports Page -->
         <div class="page" id="reports">
             <div class="header">
@@ -1392,6 +1539,82 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">Uložiť platobné údaje</button>
+                </form>
+            </div>
+
+            <!-- Email Settings -->
+            <div class="panel" style="margin-top: 30px;">
+                <h2>Email nastavenia</h2>
+
+                <form id="emailSettingsForm">
+                    <div class="form-group">
+                        <label>Email od (From)</label>
+                        <input type="email" name="emailFrom" placeholder="fakturacny@mojafirma.sk" value="info@mojaszco.sk">
+                        <small class="form-hint">Email adresa odosielateľa faktúr</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Meno</label>
+                        <input type="text" name="emailFromName" placeholder="Moja SZČO - Fakturácia" value="Moja SZČO">
+                        <small class="form-hint">Meno odosielateľa</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email predmet (faktúra)</label>
+                        <input type="text" name="invoiceSubject" value="Faktúra {number} - {client}">
+                        <small class="form-hint">Premenné: {number}, {client}, {amount}, {date}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email text (faktúra)</label>
+                        <textarea name="invoiceBody" rows="5" placeholder="Dobrý deň,
+
+v prílohe zasielame faktúru...">Dobrý deň,
+
+v prílohe Vám zasielame faktúru číslo {number} s dátumom splatnosti {dueDate}.
+
+Celková suma: {amount}
+
+Ďakujeme za spoluprácu.
+
+S pozdravom,
+{companyName}</textarea>
+                        <small class="form-hint">Premenné: {number}, {client}, {amount}, {date}, {dueDate}, {companyName}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email predmet (upomienka)</label>
+                        <input type="text" name="reminderSubject" value="Upomienka - Faktúra {number} po splatnosti">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email text (upomienka)</label>
+                        <textarea name="reminderBody" rows="5">Dobrý deň,
+
+upozorňujeme Vás, že faktúra číslo {number} so splatnosťou {dueDate} je {daysOverdue} dní po splatnosti.
+
+Celková suma: {amount}
+
+Prosíme o úhradu v najbližších dňoch.
+
+S pozdravom,
+{companyName}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="autoReminders"> Automatické upomienky
+                        </label>
+                        <small class="form-hint">Posielať upomienky automaticky X dní po splatnosti</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upomienka po (dní)</label>
+                        <input type="number" name="reminderDays" value="7" min="1" max="90">
+                        <small class="form-hint">Počet dní po splatnosti pre odoslanie prvej upomienky</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Uložiť email nastavenia</button>
                 </form>
             </div>
 
@@ -2177,6 +2400,61 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal - Send Email -->
+    <div class="modal" id="sendEmailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Odoslať faktúru emailom</h3>
+                <button class="close-btn" data-close="sendEmailModal">&times;</button>
+            </div>
+
+            <form id="sendEmailForm">
+                <div class="form-group">
+                    <label>Príjemca</label>
+                    <input type="email" id="emailTo" name="emailTo" required placeholder="klient@firma.sk">
+                </div>
+
+                <div class="form-group">
+                    <label>Kópia (CC)</label>
+                    <input type="email" name="emailCc" placeholder="ucto@firma.sk">
+                </div>
+
+                <div class="form-group">
+                    <label>Predmet</label>
+                    <input type="text" id="emailSubject" name="emailSubject" required value="Faktúra 2025-0042">
+                </div>
+
+                <div class="form-group">
+                    <label>Správa</label>
+                    <textarea id="emailBody" name="emailBody" rows="8" required>Dobrý deň,
+
+v prílohe Vám zasielame faktúru.
+
+Ďakujeme za spoluprácu.
+
+S pozdravom</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="attachPdf" checked> Pripojiť PDF faktúru
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="sendCopyToSelf"> Poslať kópiu sebe
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Odoslať email</button>
+                    <button type="button" class="btn btn-secondary" data-close="sendEmailModal">Zrušiť</button>
+                </div>
+            </form>
         </div>
     </div>
 
