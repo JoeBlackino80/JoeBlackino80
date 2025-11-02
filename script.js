@@ -1108,6 +1108,21 @@ class InvoiceSystem {
     // Save system settings
     saveSystemSettings(e) {
         e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const language = formData.get('language');
+
+        // Save language preference
+        if (language) {
+            localStorage.setItem('language', language);
+            this.currentLanguage = language;
+            this.showNotification(
+                t('msg.saved', language),
+                'Jazyk bol zmenený na ' + (language === 'sk' ? 'Slovenčinu' : language === 'cz' ? 'Češtinu' : 'English'),
+                'success'
+            );
+        }
+
         console.log('Saving system settings');
         console.log('API Endpoint: PUT /api/v1/settings/system');
         this.showNotification('Nastavenia uložené', 'Systémové nastavenia boli úspešne uložené.', 'success');
