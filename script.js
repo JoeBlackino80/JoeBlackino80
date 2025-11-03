@@ -248,6 +248,21 @@ class InvoiceSystem {
             expenseForm.addEventListener('submit', (e) => this.createExpense(e));
         }
 
+        const recurringInvoiceForm = document.getElementById('recurringInvoiceForm');
+        if (recurringInvoiceForm) {
+            recurringInvoiceForm.addEventListener('submit', (e) => this.createRecurringInvoice(e));
+        }
+
+        const productForm = document.getElementById('productForm');
+        if (productForm) {
+            productForm.addEventListener('submit', (e) => this.createProduct(e));
+        }
+
+        const projectForm = document.getElementById('projectForm');
+        if (projectForm) {
+            projectForm.addEventListener('submit', (e) => this.createProject(e));
+        }
+
         // Issue invoice button
         const issueBtn = document.getElementById('issueInvoiceBtn');
         if (issueBtn) {
@@ -583,6 +598,83 @@ class InvoiceSystem {
 
         this.showNotification('Náklad zaznamenaný!', 'Výdavok bol uložený pre účtovné účely.', 'success');
         this.closeModal('expenseModal');
+        e.target.reset();
+    }
+
+    createRecurringInvoice(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const recurringInvoice = {
+            clientId: formData.get('clientId'),
+            amount: parseFloat(formData.get('amount')),
+            frequency: formData.get('frequency'),
+            startDate: formData.get('startDate'),
+            companyId: this.currentCompanyId,
+            active: true
+        };
+
+        console.log('Opakujúca sa faktúra vytvorená:', recurringInvoice);
+        console.log('API Endpoint: POST /api/v1/recurring-invoices');
+
+        this.showNotification('Opakujúca faktúra vytvorená!', 'Automatické fakturácie bola nastavená.', 'success');
+        this.closeModal('recurringInvoiceModal');
+        e.target.reset();
+    }
+
+    createProduct(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const product = {
+            name: formData.get('name'),
+            category: formData.get('category'),
+            unit: formData.get('unit') || 'ks',
+            price: parseFloat(formData.get('price')),
+            vat: parseInt(formData.get('vat')),
+            companyId: this.currentCompanyId
+        };
+
+        console.log('Produkt vytvorený:', product);
+        console.log('API Endpoint: POST /api/v1/products');
+
+        this.showNotification('Produkt pridaný!', 'Položka bola pridaná do cenníka.', 'success');
+        this.closeModal('productModal');
+        e.target.reset();
+    }
+
+    createProject(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const project = {
+            name: formData.get('name'),
+            clientId: formData.get('clientId'),
+            budget: parseFloat(formData.get('budget')) || 0,
+            estimatedHours: parseInt(formData.get('estimatedHours')) || 0,
+            deadline: formData.get('deadline'),
+            description: formData.get('description'),
+            companyId: this.currentCompanyId,
+            status: 'active'
+        };
+
+        console.log('Projekt vytvorený:', project);
+        console.log('API Endpoint: POST /api/v1/projects');
+
+        this.showNotification('Projekt vytvorený!', 'Nový projekt bol pridaný do systému.', 'success');
+        this.closeModal('projectModal');
         e.target.reset();
     }
 
@@ -2020,6 +2112,21 @@ class InvoiceSystem {
                 'success'
             );
         }
+    }
+
+    // Match bank transaction with invoice
+    matchTransaction(transactionId) {
+        console.log('Matching transaction:', transactionId);
+        console.log('API Endpoint: POST /api/v1/bank/match-transaction');
+
+        this.showNotification(
+            'Transakcia spárovaná',
+            'Bankové transakcia bola úspešne spárovaná s faktúrou',
+            'success'
+        );
+
+        // In production, this would open a modal to select invoice
+        // and update the transaction status in the database
     }
 }
 
