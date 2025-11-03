@@ -4,6 +4,8 @@ class InvoiceSystem {
         this.currentPage = 'dashboard';
         this.mockClients = this.initMockClients();
         this.mockInvoices = this.initMockInvoices();
+        this.mockProducts = this.initMockProducts();
+        this.mockProjects = this.initMockProjects();
         this.charts = {};
         this.filteredInvoices = [];
 
@@ -116,6 +118,22 @@ class InvoiceSystem {
             { id: 1, number: '2025-0042', clientId: 1, date: '27.10.2025', amount: 1200, status: 'paid', base: 1000, vat: 200 },
             { id: 2, number: '2025-0041', clientId: 2, date: '25.10.2025', amount: 3500, status: 'issued', base: 2916.67, vat: 583.33 },
             { id: 3, number: '2025-0040', clientId: 3, date: '20.10.2025', amount: 850, status: 'overdue', base: 708.33, vat: 141.67 }
+        ];
+    }
+
+    initMockProducts() {
+        return [
+            { id: 1, name: 'Vývoj webovej aplikácie', category: 'service', unit: 'hod', price: 50.00, vat: 20 },
+            { id: 2, name: 'Grafický dizajn', category: 'service', unit: 'hod', price: 40.00, vat: 20 },
+            { id: 3, name: 'Marketingová konzultácia', category: 'service', unit: 'hod', price: 60.00, vat: 20 }
+        ];
+    }
+
+    initMockProjects() {
+        return [
+            { id: 1, name: 'Redesign webstránky', clientId: 1, clientName: 'ACME s.r.o.', status: 'in_progress', budget: 5000, workedHours: 45, estimatedHours: 80, deadline: '2025-12-15' },
+            { id: 2, name: 'Mobilná aplikácia', clientId: 2, clientName: 'Tech Solutions s.r.o.', status: 'in_progress', budget: 12000, workedHours: 120, estimatedHours: 200, deadline: '2026-01-31' },
+            { id: 3, name: 'SEO optimalizácia', clientId: 3, clientName: 'Digital Marketing s.r.o.', status: 'completed', budget: 2500, workedHours: 50, estimatedHours: 50, deadline: '2025-11-30' }
         ];
     }
 
@@ -558,12 +576,37 @@ class InvoiceSystem {
             return;
         }
 
-        console.log('Faktúra vytvorená');
+        const formData = new FormData(e.target);
+
+        // Create new invoice object
+        const newInvoice = {
+            id: Math.max(...this.mockInvoices.map(i => i.id), 0) + 1,
+            number: '2025-' + String(Math.max(...this.mockInvoices.map(i => parseInt(i.number.split('-')[1])), 41) + 1).padStart(4, '0'),
+            clientId: parseInt(formData.get('clientId')),
+            date: new Date(formData.get('issueDate')).toLocaleDateString('sk-SK'),
+            dueDate: new Date(formData.get('dueDate')).toLocaleDateString('sk-SK'),
+            amount: 1200, // Would calculate from items
+            base: 1000,
+            vat: 200,
+            total: 1200,
+            status: 'draft',
+            type: 'Faktúra'
+        };
+
+        // Add to mock data
+        this.mockInvoices.push(newInvoice);
+
+        console.log('Faktúra vytvorená:', newInvoice);
         console.log('API Endpoint: POST /api/v1/documents/create');
 
         this.showNotification('Faktúra vytvorená!', 'Doklad bol uložený ako koncept a je pripravený na vystavenie.', 'success');
         this.closeModal('invoiceModal');
         e.target.reset();
+
+        // Refresh UI if on invoices page
+        if (this.currentPage === 'invoices') {
+            this.loadInvoices();
+        }
     }
 
     createClient(e) {
@@ -573,12 +616,36 @@ class InvoiceSystem {
             return;
         }
 
-        console.log('Klient úspešne pridaný');
+        const formData = new FormData(e.target);
+
+        // Create new client object
+        const newClient = {
+            id: Math.max(...this.mockClients.map(c => c.id), 0) + 1,
+            name: formData.get('name'),
+            ico: formData.get('ico'),
+            dic: formData.get('dic'),
+            icdph: formData.get('icdph') || '-',
+            email: formData.get('email'),
+            address: (formData.get('street') || '') + (formData.get('city') ? ', ' + formData.get('zip') + ' ' + formData.get('city') : ''),
+            iban: formData.get('iban'),
+            invoiceCount: 0,
+            totalRevenue: 0
+        };
+
+        // Add to mock data
+        this.mockClients.push(newClient);
+
+        console.log('Klient úspešne pridaný:', newClient);
         console.log('API Endpoint: POST /api/v1/clients');
 
         this.showNotification('Klient úspešne pridaný!', 'Nový klient bol uložený do databázy.', 'success');
         this.closeModal('clientModal');
         e.target.reset();
+
+        // Refresh UI if on clients page
+        if (this.currentPage === 'clients') {
+            this.renderClients();
+        }
     }
 
     createItem(e) {
@@ -645,6 +712,7 @@ class InvoiceSystem {
 
         const formData = new FormData(e.target);
         const product = {
+            id: Math.max(...this.mockProducts.map(p => p.id), 0) + 1,
             name: formData.get('name'),
             category: formData.get('category'),
             unit: formData.get('unit') || 'ks',
@@ -653,12 +721,20 @@ class InvoiceSystem {
             companyId: this.currentCompanyId
         };
 
+        // Add to mock data
+        this.mockProducts.push(product);
+
         console.log('Produkt vytvorený:', product);
         console.log('API Endpoint: POST /api/v1/products');
 
         this.showNotification('Produkt pridaný!', 'Položka bola pridaná do cenníka.', 'success');
         this.closeModal('productModal');
         e.target.reset();
+
+        // Refresh UI if on products page
+        if (this.currentPage === 'products') {
+            this.renderProducts();
+        }
     }
 
     createProject(e) {
@@ -669,16 +745,25 @@ class InvoiceSystem {
         }
 
         const formData = new FormData(e.target);
+        const clientId = parseInt(formData.get('clientId'));
+        const client = this.mockClients.find(c => c.id === clientId);
+
         const project = {
+            id: Math.max(...this.mockProjects.map(p => p.id), 0) + 1,
             name: formData.get('name'),
-            clientId: formData.get('clientId'),
+            clientId: clientId,
+            clientName: client ? client.name : 'Neznámy klient',
             budget: parseFloat(formData.get('budget')) || 0,
             estimatedHours: parseInt(formData.get('estimatedHours')) || 0,
+            workedHours: 0,
             deadline: formData.get('deadline'),
             description: formData.get('description'),
             companyId: this.currentCompanyId,
-            status: 'active'
+            status: 'in_progress'
         };
+
+        // Add to mock data
+        this.mockProjects.push(project);
 
         console.log('Projekt vytvorený:', project);
         console.log('API Endpoint: POST /api/v1/projects');
@@ -686,6 +771,11 @@ class InvoiceSystem {
         this.showNotification('Projekt vytvorený!', 'Nový projekt bol pridaný do systému.', 'success');
         this.closeModal('projectModal');
         e.target.reset();
+
+        // Refresh UI if on projects page
+        if (this.currentPage === 'projects') {
+            this.renderProjects();
+        }
     }
 
     createProforma(e) {
@@ -1815,6 +1905,96 @@ class InvoiceSystem {
         document.getElementById('unpaidInvoicesCount').textContent = unpaidInvoices;
         document.getElementById('overdueInvoicesCount').textContent = overdueInvoices;
         document.getElementById('thisMonthRevenue').textContent = '€' + thisMonthRevenue.toFixed(2);
+    }
+
+    // Render clients table
+    renderClients() {
+        const tbody = document.getElementById('clientsBody');
+        if (!tbody) return;
+
+        if (this.mockClients.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Žiadni klienti neboli nájdení</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = this.mockClients.map(client => `
+            <tr>
+                <td><strong>${client.name}</strong></td>
+                <td>${client.ico}</td>
+                <td>${client.icdph}</td>
+                <td>${client.email}</td>
+                <td>${client.invoiceCount}</td>
+                <td>€${client.totalRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
+                <td>
+                    <button class="btn btn-secondary btn-small" data-action="viewClient" data-client-id="${client.id}">Detail</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Render products table
+    renderProducts() {
+        const tbody = document.getElementById('productsTableBody');
+        if (!tbody) return;
+
+        if (this.mockProducts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">Žiadne produkty neboli nájdené</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = this.mockProducts.map(product => {
+            const priceWithVat = product.price * (1 + product.vat / 100);
+            const categoryLabel = product.category === 'service' ? 'Služba' : 'Tovar';
+            return `
+                <tr>
+                    <td><strong>${product.name}</strong></td>
+                    <td><span class="badge badge-info">${categoryLabel}</span></td>
+                    <td>${product.unit}</td>
+                    <td>€${product.price.toFixed(2)}</td>
+                    <td>${product.vat}%</td>
+                    <td><strong>€${priceWithVat.toFixed(2)}</strong></td>
+                    <td>-</td>
+                    <td>
+                        <button class="btn btn-secondary btn-small">Upraviť</button>
+                        <button class="btn btn-danger btn-small">Zmazať</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Render projects table
+    renderProjects() {
+        const tbody = document.getElementById('projectsTableBody');
+        if (!tbody) return;
+
+        if (this.mockProjects.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Žiadne projekty neboli nájdené</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = this.mockProjects.map(project => {
+            const statusLabel = project.status === 'in_progress' ? 'V procese' :
+                               project.status === 'completed' ? 'Dokončený' : 'Aktívny';
+            const statusClass = project.status === 'in_progress' ? 'warning' :
+                               project.status === 'completed' ? 'success' : 'info';
+            const deadline = new Date(project.deadline).toLocaleDateString('sk-SK');
+
+            return `
+                <tr>
+                    <td><strong>${project.name}</strong></td>
+                    <td>${project.clientName}</td>
+                    <td><span class="badge badge-${statusClass}">${statusLabel}</span></td>
+                    <td>€${project.budget.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
+                    <td>${project.workedHours}h / ${project.estimatedHours}h</td>
+                    <td>${deadline}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-small">Detail</button>
+                        <button class="btn btn-primary btn-small">+ Čas</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // Apply invoice filters
