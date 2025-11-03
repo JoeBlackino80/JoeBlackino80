@@ -2575,11 +2575,55 @@ S pozdravom</textarea>
     <div class="modal" id="proformaModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Proforma faktúra</h3>
+                <h3>Nová Proforma Faktúra</h3>
                 <button class="close-btn" data-close="proformaModal">&times;</button>
             </div>
-            <p>Proforma faktúra modal - pripravené pre implementáciu</p>
-            <button class="btn btn-secondary" data-close="proformaModal">Zatvoriť</button>
+
+            <form id="proformaForm">
+                <div class="form-group">
+                    <label>Klient</label>
+                    <select name="clientId" required>
+                        <option value="">Vyberte klienta</option>
+                        <option value="1">ACME s.r.o.</option>
+                        <option value="2">Tech Solutions s.r.o.</option>
+                        <option value="3">Digital Marketing s.r.o.</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dátum vystavenia</label>
+                    <input type="date" name="issueDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Platnosť do</label>
+                    <input type="date" name="validUntil" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Položky</label>
+                    <div class="item-row">
+                        <input type="text" name="itemName[]" placeholder="Názov položky" required style="flex: 2;">
+                        <input type="number" name="quantity[]" placeholder="Množstvo" value="1" min="1" step="1" required style="width: 80px;">
+                        <input type="number" name="price[]" placeholder="Cena/j" step="0.01" min="0" required style="width: 100px;">
+                        <select name="vat[]" style="width: 100px;">
+                            <option value="20">20% DPH</option>
+                            <option value="10">10% DPH</option>
+                            <option value="0">0% DPH</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Poznámka</label>
+                    <textarea name="note" rows="3" placeholder="Toto je predbežná faktúra. Skutočná faktúra bude vystavená po potvrdení objednávky."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Vytvoriť proforma faktúru</button>
+                    <button type="button" class="btn btn-secondary" data-close="proformaModal">Zrušiť</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -2587,11 +2631,88 @@ S pozdravom</textarea>
     <div class="modal" id="offerModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Cenová ponuka</h3>
+                <h3>Nová Cenová Ponuka</h3>
                 <button class="close-btn" data-close="offerModal">&times;</button>
             </div>
-            <p>Cenová ponuka modal - pripravené pre implementáciu</p>
-            <button class="btn btn-secondary" data-close="offerModal">Zatvoriť</button>
+
+            <form id="offerForm">
+                <div class="form-group">
+                    <label>Klient / Potenciálny zákazník</label>
+                    <select name="clientId" required>
+                        <option value="">Vyberte klienta</option>
+                        <option value="1">ACME s.r.o.</option>
+                        <option value="2">Tech Solutions s.r.o.</option>
+                        <option value="3">Digital Marketing s.r.o.</option>
+                        <option value="new">+ Nový kontakt</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Predmet ponuky</label>
+                    <input type="text" name="subject" required placeholder="Dodávka a implementácia CRM systému">
+                </div>
+
+                <div class="form-group">
+                    <label>Dátum vystavenia</label>
+                    <input type="date" name="issueDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Platnosť ponuky</label>
+                    <select name="validityDays" required>
+                        <option value="7">7 dní</option>
+                        <option value="14">14 dní</option>
+                        <option value="30">30 dní</option>
+                        <option value="60">60 dní</option>
+                        <option value="90">90 dní</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Položky ponuky</label>
+                    <div class="item-row">
+                        <input type="text" name="itemName[]" placeholder="Názov položky/služby" required style="flex: 2;">
+                        <input type="number" name="quantity[]" placeholder="Množstvo" value="1" min="1" step="1" required style="width: 80px;">
+                        <input type="number" name="price[]" placeholder="Cena/j" step="0.01" min="0" required style="width: 100px;">
+                        <select name="vat[]" style="width: 100px;">
+                            <option value="20">20% DPH</option>
+                            <option value="10">10% DPH</option>
+                            <option value="0">0% DPH</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Platobné podmienky</label>
+                    <select name="paymentTerms">
+                        <option value="advance">100% vopred</option>
+                        <option value="50-50">50% vopred, 50% po dodaní</option>
+                        <option value="30-70">30% vopred, 70% po dodaní</option>
+                        <option value="delivery">Platba po dodaní (14 dní)</option>
+                        <option value="delivery30">Platba po dodaní (30 dní)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dodacia lehota</label>
+                    <input type="text" name="deliveryTime" placeholder="napr. 30 pracovných dní">
+                </div>
+
+                <div class="form-group">
+                    <label>Úvodný text / Popis</label>
+                    <textarea name="description" rows="4" placeholder="Popis projektu, rozsah prác, špecifikácie..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Dodatočné podmienky</label>
+                    <textarea name="terms" rows="3" placeholder="Záručné podmienky, servisné zmluvy, bonusy..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Vytvoriť cenovú ponuku</button>
+                    <button type="button" class="btn btn-secondary" data-close="offerModal">Zrušiť</button>
+                </div>
+            </form>
         </div>
     </div>
 

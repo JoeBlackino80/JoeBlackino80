@@ -263,6 +263,16 @@ class InvoiceSystem {
             projectForm.addEventListener('submit', (e) => this.createProject(e));
         }
 
+        const proformaForm = document.getElementById('proformaForm');
+        if (proformaForm) {
+            proformaForm.addEventListener('submit', (e) => this.createProforma(e));
+        }
+
+        const offerForm = document.getElementById('offerForm');
+        if (offerForm) {
+            offerForm.addEventListener('submit', (e) => this.createOffer(e));
+        }
+
         // Issue invoice button
         const issueBtn = document.getElementById('issueInvoiceBtn');
         if (issueBtn) {
@@ -675,6 +685,77 @@ class InvoiceSystem {
 
         this.showNotification('Projekt vytvorený!', 'Nový projekt bol pridaný do systému.', 'success');
         this.closeModal('projectModal');
+        e.target.reset();
+    }
+
+    createProforma(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const proforma = {
+            clientId: formData.get('clientId'),
+            issueDate: formData.get('issueDate'),
+            validUntil: formData.get('validUntil'),
+            items: [
+                {
+                    name: formData.get('itemName[]'),
+                    quantity: parseInt(formData.get('quantity[]')),
+                    price: parseFloat(formData.get('price[]')),
+                    vat: parseInt(formData.get('vat[]'))
+                }
+            ],
+            note: formData.get('note'),
+            companyId: this.currentCompanyId,
+            type: 'proforma'
+        };
+
+        console.log('Proforma faktúra vytvorená:', proforma);
+        console.log('API Endpoint: POST /api/v1/documents/proforma');
+
+        this.showNotification('Proforma faktúra vytvorená!', 'Predbežná faktúra bola úspešne vytvorená.', 'success');
+        this.closeModal('proformaModal');
+        e.target.reset();
+    }
+
+    createOffer(e) {
+        e.preventDefault();
+
+        if (!this.validateForm(e.target)) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const offer = {
+            clientId: formData.get('clientId'),
+            subject: formData.get('subject'),
+            issueDate: formData.get('issueDate'),
+            validityDays: parseInt(formData.get('validityDays')),
+            items: [
+                {
+                    name: formData.get('itemName[]'),
+                    quantity: parseInt(formData.get('quantity[]')),
+                    price: parseFloat(formData.get('price[]')),
+                    vat: parseInt(formData.get('vat[]'))
+                }
+            ],
+            paymentTerms: formData.get('paymentTerms'),
+            deliveryTime: formData.get('deliveryTime'),
+            description: formData.get('description'),
+            terms: formData.get('terms'),
+            companyId: this.currentCompanyId,
+            type: 'offer',
+            status: 'pending'
+        };
+
+        console.log('Cenová ponuka vytvorená:', offer);
+        console.log('API Endpoint: POST /api/v1/documents/offer');
+
+        this.showNotification('Cenová ponuka vytvorená!', 'Ponuka bola odoslaná klientovi.', 'success');
+        this.closeModal('offerModal');
         e.target.reset();
     }
 
