@@ -2571,6 +2571,148 @@ S pozdravom</textarea>
         </div>
     </div>
 
+    <!-- Modal - Proforma Invoice -->
+    <div class="modal" id="proformaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Proforma faktúra</h3>
+                <button class="close-btn" data-close="proformaModal">&times;</button>
+            </div>
+            <p>Proforma faktúra modal - pripravené pre implementáciu</p>
+            <button class="btn btn-secondary" data-close="proformaModal">Zatvoriť</button>
+        </div>
+    </div>
+
+    <!-- Modal - Offer -->
+    <div class="modal" id="offerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cenová ponuka</h3>
+                <button class="close-btn" data-close="offerModal">&times;</button>
+            </div>
+            <p>Cenová ponuka modal - pripravené pre implementáciu</p>
+            <button class="btn btn-secondary" data-close="offerModal">Zatvoriť</button>
+        </div>
+    </div>
+
+    <!-- Modal - Recurring Invoice -->
+    <div class="modal" id="recurringInvoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nová opakujúca sa faktúra</h3>
+                <button class="close-btn" data-close="recurringInvoiceModal">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Klient</label>
+                    <select required>
+                        <option value="">Vyberte klienta</option>
+                        <option>ACME s.r.o.</option>
+                        <option>Tech Solutions s.r.o.</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Suma (€)</label>
+                    <input type="number" step="0.01" required placeholder="1500.00">
+                </div>
+                <div class="form-group">
+                    <label>Frekvencia</label>
+                    <select required>
+                        <option value="monthly">Mesačne</option>
+                        <option value="quarterly">Štvrťročne</option>
+                        <option value="yearly">Ročne</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dátum prvého vystavenia</label>
+                    <input type="date" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Vytvoriť</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - Product -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nový produkt/služba</h3>
+                <button class="close-btn" data-close="productModal">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Názov</label>
+                    <input type="text" required placeholder="Vývoj webovej aplikácie">
+                </div>
+                <div class="form-group">
+                    <label>Kategória</label>
+                    <select required>
+                        <option value="service">Služba</option>
+                        <option value="goods">Tovar</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jednotka</label>
+                    <input type="text" placeholder="hod, ks, m²">
+                </div>
+                <div class="form-group">
+                    <label>Cena bez DPH (€)</label>
+                    <input type="number" step="0.01" required placeholder="50.00">
+                </div>
+                <div class="form-group">
+                    <label>DPH sadzba</label>
+                    <select>
+                        <option value="20">20%</option>
+                        <option value="10">10%</option>
+                        <option value="0">0%</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Pridať produkt</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - Project -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nový projekt</h3>
+                <button class="close-btn" data-close="projectModal">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Názov projektu</label>
+                    <input type="text" required placeholder="Redesign webstránky">
+                </div>
+                <div class="form-group">
+                    <label>Klient</label>
+                    <select required>
+                        <option value="">Vyberte klienta</option>
+                        <option>ACME s.r.o.</option>
+                        <option>Tech Solutions s.r.o.</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Rozpočet (€)</label>
+                    <input type="number" step="0.01" placeholder="5000.00">
+                </div>
+                <div class="form-group">
+                    <label>Odhadované hodiny</label>
+                    <input type="number" placeholder="80">
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Popis</label>
+                    <textarea rows="3" placeholder="Stručný popis projektu..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Vytvoriť projekt</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
