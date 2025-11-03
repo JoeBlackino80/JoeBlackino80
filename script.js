@@ -1373,6 +1373,212 @@ class InvoiceSystem {
             });
         }
 
+        // Cashflow chart (Reports page)
+        const cashflowCtx = document.getElementById('cashflowChart');
+        if (cashflowCtx) {
+            this.charts.cashflow = new Chart(cashflowCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'Príjmy',
+                            data: [850, 1200, 1100, 1400, 1300, 1500, 1450, 1600, 1550, 1700, 1650, 1800],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Výdavky',
+                            data: [300, 250, 400, 350, 300, 400, 350, 450, 400, 380, 420, 390],
+                            borderColor: '#f44336',
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Cashflow',
+                            data: [550, 950, 700, 1050, 1000, 1100, 1100, 1150, 1150, 1320, 1230, 1410],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Cashflow Analysis'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Monthly breakdown chart (Reports page)
+        const monthlyBreakdownCtx = document.getElementById('monthlyBreakdownChart');
+        if (monthlyBreakdownCtx) {
+            this.charts.monthlyBreakdown = new Chart(monthlyBreakdownCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'Faktúry vystavené',
+                            data: [12, 15, 13, 18, 16, 20, 19, 21, 20, 23, 22, 24],
+                            backgroundColor: '#667eea',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Obrat (€)',
+                            data: [850, 1200, 1100, 1400, 1300, 1500, 1450, 1600, 1550, 1700, 1650, 1800],
+                            backgroundColor: '#4CAF50',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mesačné štatistiky'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Počet faktúr'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Obrat (€)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Prediction chart (Reports page)
+        const predictionCtx = document.getElementById('predictionChart');
+        if (predictionCtx) {
+            this.charts.prediction = new Chart(predictionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Okt', 'Nov', 'Dec', 'Jan (P)', 'Feb (P)', 'Mar (P)', 'Apr (P)', 'Máj (P)', 'Jún (P)'],
+                    datasets: [
+                        {
+                            label: 'Skutočné príjmy',
+                            data: [1700, 1650, 1800, null, null, null, null, null, null],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Predikcia príjmov',
+                            data: [null, null, 1800, 1850, 1900, 1950, 2000, 2050, 2100],
+                            borderColor: '#ff6384',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Optimistický scenár',
+                            data: [null, null, 1800, 1950, 2100, 2200, 2300, 2400, 2500],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.05)',
+                            borderDash: [2, 2],
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Pesimistický scenár',
+                            data: [null, null, 1800, 1750, 1700, 1700, 1650, 1700, 1750],
+                            borderColor: '#f44336',
+                            backgroundColor: 'rgba(244, 67, 54, 0.05)',
+                            borderDash: [2, 2],
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Predikcia príjmov na nasledujúcich 6 mesiacov'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         console.log('Charts initialized');
     }
 
