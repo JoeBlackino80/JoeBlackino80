@@ -1701,11 +1701,14 @@ S pozdravom,
                 <button class="btn btn-primary" data-modal="productModal">Pridať položku</button>
             </div>
 
-            <!-- Product Categories -->
-            <div class="tabs">
-                <button class="tab active" data-tab="all-products">Všetky</button>
-                <button class="tab" data-tab="services">Služby</button>
-                <button class="tab" data-tab="goods">Tovar</button>
+            <!-- Search and Filter -->
+            <div class="filters-panel">
+                <input type="text" id="productSearch" placeholder="Hľadať produkt/službu..." style="flex: 1; max-width: 400px;">
+                <select id="categoryFilter">
+                    <option value="">Všetky kategórie</option>
+                    <option value="service">Služby</option>
+                    <option value="goods">Tovar</option>
+                </select>
             </div>
 
             <!-- Products Table -->
@@ -1774,6 +1777,17 @@ S pozdravom,
                 <h1>Projekty</h1>
                 <p>Správa projektov a time tracking</p>
                 <button class="btn btn-primary" data-modal="projectModal">Nový projekt</button>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="filters-panel">
+                <input type="text" id="projectSearch" placeholder="Hľadať projekt..." style="flex: 1; max-width: 400px;">
+                <select id="projectStatusFilter">
+                    <option value="">Všetky statusy</option>
+                    <option value="in_progress">V procese</option>
+                    <option value="completed">Dokončené</option>
+                    <option value="on_hold">Pozastavené</option>
+                </select>
             </div>
 
             <!-- Project Stats -->

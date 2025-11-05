@@ -326,6 +326,28 @@ class InvoiceSystem {
             clientSearch.addEventListener('input', (e) => this.searchClients(e.target.value));
         }
 
+        // Product search and filter
+        const productSearch = document.getElementById('productSearch');
+        if (productSearch) {
+            productSearch.addEventListener('input', (e) => this.filterProducts());
+        }
+
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => this.filterProducts());
+        }
+
+        // Project search and filter
+        const projectSearch = document.getElementById('projectSearch');
+        if (projectSearch) {
+            projectSearch.addEventListener('input', (e) => this.filterProjects());
+        }
+
+        const projectStatusFilter = document.getElementById('projectStatusFilter');
+        if (projectStatusFilter) {
+            projectStatusFilter.addEventListener('change', (e) => this.filterProjects());
+        }
+
         // VAT calculations
         const calculateVatBtn = document.getElementById('calculateVatBtn');
         if (calculateVatBtn) {
@@ -1933,16 +1955,18 @@ class InvoiceSystem {
     }
 
     // Render products table
-    renderProducts() {
+    renderProducts(products = null) {
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) return;
 
-        if (this.mockProducts.length === 0) {
+        const productsToRender = products || this.mockProducts;
+
+        if (productsToRender.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">Žiadne produkty neboli nájdené</td></tr>';
             return;
         }
 
-        tbody.innerHTML = this.mockProducts.map(product => {
+        tbody.innerHTML = productsToRender.map(product => {
             const priceWithVat = product.price * (1 + product.vat / 100);
             const categoryLabel = product.category === 'service' ? 'Služba' : 'Tovar';
             return `
@@ -1963,17 +1987,41 @@ class InvoiceSystem {
         }).join('');
     }
 
+    // Filter products
+    filterProducts() {
+        const search = document.getElementById('productSearch')?.value.toLowerCase() || '';
+        const category = document.getElementById('categoryFilter')?.value || '';
+
+        let filtered = this.mockProducts.filter(product => {
+            // Search filter
+            if (search && !product.name.toLowerCase().includes(search)) {
+                return false;
+            }
+
+            // Category filter
+            if (category && product.category !== category) {
+                return false;
+            }
+
+            return true;
+        });
+
+        this.renderProducts(filtered);
+    }
+
     // Render projects table
-    renderProjects() {
+    renderProjects(projects = null) {
         const tbody = document.getElementById('projectsTableBody');
         if (!tbody) return;
 
-        if (this.mockProjects.length === 0) {
+        const projectsToRender = projects || this.mockProjects;
+
+        if (projectsToRender.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Žiadne projekty neboli nájdené</td></tr>';
             return;
         }
 
-        tbody.innerHTML = this.mockProjects.map(project => {
+        tbody.innerHTML = projectsToRender.map(project => {
             const statusLabel = project.status === 'in_progress' ? 'V procese' :
                                project.status === 'completed' ? 'Dokončený' : 'Aktívny';
             const statusClass = project.status === 'in_progress' ? 'warning' :
@@ -1995,6 +2043,29 @@ class InvoiceSystem {
                 </tr>
             `;
         }).join('');
+    }
+
+    // Filter projects
+    filterProjects() {
+        const search = document.getElementById('projectSearch')?.value.toLowerCase() || '';
+        const status = document.getElementById('projectStatusFilter')?.value || '';
+
+        let filtered = this.mockProjects.filter(project => {
+            // Search filter
+            if (search && !project.name.toLowerCase().includes(search) &&
+                !project.clientName.toLowerCase().includes(search)) {
+                return false;
+            }
+
+            // Status filter
+            if (status && project.status !== status) {
+                return false;
+            }
+
+            return true;
+        });
+
+        this.renderProjects(filtered);
     }
 
     // Apply invoice filters
