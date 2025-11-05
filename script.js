@@ -245,6 +245,7 @@ class InvoiceSystem {
         this.initKeyboardShortcuts();
         this.initBulkDelete();
         this.initInvoiceCalculator();
+        this.initPageStatistics();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -2691,6 +2692,118 @@ class InvoiceSystem {
         invoiceItemsContainer.appendChild(newRow);
         this.calculateItemTotal(newRow);
         this.updateInvoiceTotals();
+    }
+
+    // Initialize page statistics
+    initPageStatistics() {
+        // Initialize client revenue chart
+        this.initClientRevenueChart();
+        this.updateClientStatistics();
+
+        // Initialize product category chart
+        this.initProductCategoryChart();
+        this.updateProductStatistics();
+    }
+
+    // Initialize client revenue chart
+    initClientRevenueChart() {
+        const canvas = document.getElementById('clientRevenueChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const clientData = this.mockClients.sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5);
+
+        this.charts.clientRevenue = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: clientData.map(c => c.name),
+                datasets: [{
+                    label: 'Obrat (€)',
+                    data: clientData.map(c => c.totalRevenue),
+                    backgroundColor: '#4CAF50',
+                    borderColor: '#388E3C',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Update client statistics
+    updateClientStatistics() {
+        const total = this.mockClients.length;
+        const totalRevenue = this.mockClients.reduce((sum, c) => sum + c.totalRevenue, 0);
+        const avgRevenue = total > 0 ? totalRevenue / total : 0;
+        const topClient = this.mockClients.reduce((top, c) =>
+            c.totalRevenue > (top?.totalRevenue || 0) ? c : top, null);
+
+        document.getElementById('clientsStatTotal').textContent = total;
+        document.getElementById('clientsStatRevenue').textContent = '€' + totalRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        document.getElementById('clientsStatAverage').textContent = '€' + avgRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        document.getElementById('clientsStatTop').textContent = topClient ? topClient.name : '-';
+    }
+
+    // Initialize product category chart
+    initProductCategoryChart() {
+        const canvas = document.getElementById('productCategoryChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const services = this.mockProducts.filter(p => p.category === 'service').length;
+        const goods = this.mockProducts.filter(p => p.category === 'goods').length;
+
+        this.charts.productCategory = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Služby', 'Tovar'],
+                datasets: [{
+                    data: [services, goods],
+                    backgroundColor: ['#2196F3', '#FF9800'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Update product statistics
+    updateProductStatistics() {
+        const total = this.mockProducts.length;
+        const services = this.mockProducts.filter(p => p.category === 'service').length;
+        const goods = this.mockProducts.filter(p => p.category === 'goods').length;
+        const avgPrice = total > 0 ? this.mockProducts.reduce((sum, p) => sum + p.price, 0) / total : 0;
+
+        document.getElementById('productsStatTotal').textContent = total;
+        document.getElementById('productsStatServices').textContent = services;
+        document.getElementById('productsStatGoods').textContent = goods;
+        document.getElementById('productsStatAvgPrice').textContent = '€' + avgPrice.toFixed(2);
     }
 
     // Apply invoice filters

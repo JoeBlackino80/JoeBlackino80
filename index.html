@@ -469,6 +469,32 @@
                 <button class="btn btn-danger" id="bulkDeleteClientsBtn" style="display: none;">Zmazať označené</button>
             </div>
 
+            <!-- Client Statistics -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <h4>Celkový počet klientov</h4>
+                    <p class="stat-number" id="clientsStatTotal">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Celkový obrat</h4>
+                    <p class="stat-number" id="clientsStatRevenue">€0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Priemerný obrat / klient</h4>
+                    <p class="stat-number" id="clientsStatAverage">€0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>TOP klient</h4>
+                    <p class="stat-number" id="clientsStatTop">-</p>
+                </div>
+            </div>
+
+            <!-- Client Revenue Chart -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h3>Obrat podľa klientov</h3>
+                <canvas id="clientRevenueChart" height="80"></canvas>
+            </div>
+
             <div class="panel">
                 <div class="panel-header">
                     <h2>Zoznam klientov</h2>
@@ -1712,6 +1738,32 @@ S pozdravom,
                     <option value="goods">Tovar</option>
                 </select>
                 <button class="btn btn-danger" id="bulkDeleteProductsBtn" style="display: none; margin-left: 10px;">Zmazať označené</button>
+            </div>
+
+            <!-- Product Statistics -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <h4>Celkový počet produktov</h4>
+                    <p class="stat-number" id="productsStatTotal">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Služby</h4>
+                    <p class="stat-number" id="productsStatServices">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Tovar</h4>
+                    <p class="stat-number" id="productsStatGoods">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Priemerná cena</h4>
+                    <p class="stat-number" id="productsStatAvgPrice">€0</p>
+                </div>
+            </div>
+
+            <!-- Product Category Chart -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h3>Rozdelenie produktov podľa kategórie</h3>
+                <canvas id="productCategoryChart" height="80"></canvas>
             </div>
 
             <!-- Products Table -->
