@@ -245,7 +245,7 @@ class InvoiceSystem {
         this.initKeyboardShortcuts();
         this.initBulkDelete();
         this.initInvoiceCalculator();
-        this.initPageStatistics();
+        // Note: initPageStatistics() is called in navigateTo() to ensure DOM is ready
         this.initCSVImport();
 
         console.log('Fakturačný systém inicializovaný');
@@ -423,6 +423,23 @@ class InvoiceSystem {
 
         this.currentPage = page;
         console.log('Navigated to:', page);
+
+        // Initialize page-specific charts after DOM is visible
+        if (page === 'clients') {
+            setTimeout(() => {
+                if (!this.charts.clientRevenue) {
+                    this.initClientRevenueChart();
+                }
+                this.updateClientStatistics();
+            }, 100);
+        } else if (page === 'products') {
+            setTimeout(() => {
+                if (!this.charts.productCategory) {
+                    this.initProductCategoryChart();
+                }
+                this.updateProductStatistics();
+            }, 100);
+        }
     }
 
     // Initialize all event listeners
@@ -632,6 +649,17 @@ class InvoiceSystem {
                 this.switchClientTab(tabName);
             });
         });
+
+        // CSV Export buttons
+        const exportClientsBtn = document.getElementById('exportClientsBtn');
+        if (exportClientsBtn) {
+            exportClientsBtn.addEventListener('click', () => this.exportClientsCSV());
+        }
+
+        const exportProductsBtn = document.getElementById('exportProductsBtn');
+        if (exportProductsBtn) {
+            exportProductsBtn.addEventListener('click', () => this.exportProductsCSV());
+        }
     }
 
     // Initialize validation
@@ -1331,24 +1359,61 @@ class InvoiceSystem {
     handleExport(exportType) {
         console.log('Exporting:', exportType);
 
-        const exportMap = {
-            'invoices-csv': { api: 'GET /api/v1/exports/invoices/csv', file: 'faktury.csv' },
-            'invoices-xlsx': { api: 'GET /api/v1/exports/invoices/xlsx', file: 'faktury.xlsx' },
-            'clients-csv': { api: 'GET /api/v1/exports/clients/csv', file: 'klienti.csv' },
-            'vat-report': { api: 'GET /api/v1/exports/vat/report', file: 'dph-vykaz.pdf' },
-            'expenses-csv': { api: 'GET /api/v1/exports/expenses/csv', file: 'naklady.csv' },
-            'yearly-report': { api: 'GET /api/v1/exports/yearly/report', file: 'rocny-prehled.pdf' },
-            'backup': { api: 'GET /api/v1/exports/backup', file: 'backup.json' }
+        switch(exportType) {
+            case 'invoices-csv':
+                console.log('API Endpoint: GET /api/v1/exports/invoices/csv');
+                this.exportInvoicesCSV();
+                break;
+            case 'clients-csv':
+                console.log('API Endpoint: GET /api/v1/exports/clients/csv');
+                this.exportClientsCSV();
+                break;
+            case 'products-csv':
+                console.log('API Endpoint: GET /api/v1/exports/products/csv');
+                this.exportProductsCSV();
+                break;
+            case 'vat-report':
+                console.log('API Endpoint: GET /api/v1/exports/vat/report');
+                this.showNotification('Export', 'DPH výkaz bude dostupný v ďalšej verzii.', 'info');
+                break;
+            case 'expenses-csv':
+                console.log('API Endpoint: GET /api/v1/exports/expenses/csv');
+                this.showNotification('Export', 'Export nákladov bude dostupný v ďalšej verzii.', 'info');
+                break;
+            case 'yearly-report':
+                console.log('API Endpoint: GET /api/v1/exports/yearly/report');
+                this.showNotification('Export', 'Ročný prehľad bude dostupný v ďalšej verzii.', 'info');
+                break;
+            case 'backup':
+                console.log('API Endpoint: GET /api/v1/exports/backup');
+                this.exportBackup();
+                break;
+            default:
+                console.log('Export type not yet implemented:', exportType);
+                this.showNotification('Export', 'Táto funkcia bude dostupná v ďalšej verzii.', 'info');
+        }
+    }
+
+    // Export backup of all data
+    exportBackup() {
+        const backup = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            companies: this.companies,
+            clients: this.mockClients,
+            products: this.mockProducts,
+            projects: this.mockProjects,
+            invoices: this.mockInvoices
         };
 
-        const exportInfo = exportMap[exportType];
-        if (exportInfo) {
-            console.log('API Endpoint:', exportInfo.api);
-            this.showNotification('Export úspešný', 'Súbor ' + exportInfo.file + ' bol stiahnutý.', 'success');
+        const jsonString = JSON.stringify(backup, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'backup-' + new Date().toISOString().split('T')[0] + '.json';
+        link.click();
 
-            // In a real app, trigger actual download
-            // this.downloadFile(exportInfo.file, data);
-        }
+        this.showNotification('Záloha vytvorená', 'Kompletná záloha dát bola exportovaná.', 'success');
     }
 
     // Download PDF
