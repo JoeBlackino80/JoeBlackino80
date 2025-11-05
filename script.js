@@ -25,6 +25,8 @@ class InvoiceSystem {
         this.initDarkMode();
         this.initDatabase();
         this.initEmailFunctions();
+        this.updateDashboard();
+        this.initKeyboardShortcuts();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -629,6 +631,9 @@ class InvoiceSystem {
         if (this.currentPage === 'invoices') {
             this.loadInvoices();
         }
+
+        // Update dashboard
+        this.updateDashboard();
     }
 
     createClient(e) {
@@ -668,6 +673,9 @@ class InvoiceSystem {
         if (this.currentPage === 'clients') {
             this.renderClients();
         }
+
+        // Update dashboard
+        this.updateDashboard();
     }
 
     createItem(e) {
@@ -2665,6 +2673,101 @@ class InvoiceSystem {
 
         // In production, this would open a modal to select invoice
         // and update the transaction status in the database
+    }
+
+    // Update Dashboard Statistics
+    updateDashboard() {
+        // Calculate total revenue from all invoices
+        const totalRevenue = this.mockInvoices.reduce((sum, inv) => sum + (inv.amount || inv.total || 0), 0);
+
+        // Count invoices
+        const totalInvoices = this.mockInvoices.length;
+        const unpaidInvoices = this.mockInvoices.filter(i => i.status === 'issued' || i.status === 'overdue').length;
+        const overdueInvoices = this.mockInvoices.filter(i => i.status === 'overdue').length;
+
+        // Calculate overdue amount
+        const overdueAmount = this.mockInvoices
+            .filter(i => i.status === 'overdue')
+            .reduce((sum, i) => sum + (i.amount || i.total || 0), 0);
+
+        // Client stats
+        const totalClients = this.mockClients.length;
+
+        // Update DOM
+        const dashTotalRevenue = document.getElementById('dashTotalRevenue');
+        if (dashTotalRevenue) dashTotalRevenue.textContent = '€' + totalRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        const dashTotalInvoices = document.getElementById('dashTotalInvoices');
+        if (dashTotalInvoices) dashTotalInvoices.textContent = totalInvoices;
+
+        const dashUnpaidCount = document.getElementById('dashUnpaidCount');
+        if (dashUnpaidCount) dashUnpaidCount.textContent = unpaidInvoices + ' neuhradených';
+
+        const dashOverdueCount = document.getElementById('dashOverdueCount');
+        if (dashOverdueCount) dashOverdueCount.textContent = overdueInvoices;
+
+        const dashOverdueAmount = document.getElementById('dashOverdueAmount');
+        if (dashOverdueAmount) dashOverdueAmount.textContent = '€' + overdueAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' celkom';
+
+        const dashTotalClients = document.getElementById('dashTotalClients');
+        if (dashTotalClients) dashTotalClients.textContent = totalClients;
+
+        const dashRevenueChange = document.getElementById('dashRevenueChange');
+        if (dashRevenueChange) dashRevenueChange.textContent = 'Aktuálny stav';
+
+        const dashNewClients = document.getElementById('dashNewClients');
+        if (dashNewClients) dashNewClients.textContent = 'Celkovo';
+    }
+
+    // Initialize Keyboard Shortcuts
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+N - New Invoice
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                this.openModal('invoiceModal');
+            }
+
+            // Ctrl+K - New Client
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                this.openModal('clientModal');
+            }
+
+            // Ctrl+P - New Product
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                this.openModal('productModal');
+            }
+
+            // Ctrl+Shift+P - New Project
+            if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+                e.preventDefault();
+                this.openModal('projectModal');
+            }
+
+            // Escape - Close modal
+            if (e.key === 'Escape') {
+                const openModal = document.querySelector('.modal.active');
+                if (openModal) {
+                    this.closeModal(openModal.id);
+                }
+            }
+
+            // / (slash) - Focus search
+            if (e.key === '/' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                if (this.currentPage === 'invoices') {
+                    document.getElementById('invoiceSearch')?.focus();
+                } else if (this.currentPage === 'clients') {
+                    document.getElementById('clientSearch')?.focus();
+                } else if (this.currentPage === 'products') {
+                    document.getElementById('productSearch')?.focus();
+                } else if (this.currentPage === 'projects') {
+                    document.getElementById('projectSearch')?.focus();
+                }
+            }
+        });
     }
 }
 
