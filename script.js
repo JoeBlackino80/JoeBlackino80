@@ -1036,9 +1036,87 @@ class InvoiceSystem {
 
     // Download PDF
     downloadPDF() {
-        console.log('Downloading PDF...');
-        console.log('API Endpoint: GET /api/v1/documents/{id}/pdf');
-        this.showNotification('PDF stiahnuté', 'Faktúra bola stiahnutá ako PDF.', 'success');
+        // Check if jsPDF is loaded
+        if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
+            this.showNotification('Chyba', 'jsPDF knižnica nie je načítaná', 'error');
+            console.log('API Endpoint: GET /api/v1/documents/{id}/pdf');
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Get current company
+            const company = this.companies.find(c => c.id === this.currentCompanyId);
+
+            // Add content
+            doc.setFontSize(20);
+            doc.text('FAKTÚRA', 105, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.text('Dodávateľ:', 20, 40);
+            doc.setFontSize(12);
+            doc.text(company.name, 20, 46);
+            doc.setFontSize(10);
+            doc.text(company.street + ', ' + company.zip + ' ' + company.city, 20, 52);
+            doc.text('IČO: ' + company.ico, 20, 58);
+            if (company.dic) doc.text('DIČ: ' + company.dic, 20, 64);
+            if (company.icdph) doc.text('IČ DPH: ' + company.icdph, 20, 70);
+
+            doc.text('Číslo faktúry: 2025-0001', 120, 46);
+            doc.text('Dátum vystavenia: ' + new Date().toLocaleDateString('sk-SK'), 120, 52);
+            doc.text('Dátum splatnosti: ' + new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('sk-SK'), 120, 58);
+
+            doc.setFontSize(10);
+            doc.text('Položky:', 20, 90);
+
+            doc.setFontSize(12);
+            doc.text('CELKOM: €1,200.00', 120, 120);
+
+            // Download
+            doc.save('faktura-' + Date.now() + '.pdf');
+
+            this.showNotification('PDF stiahnuté', 'Faktúra bola úspešne stiahnutá ako PDF.', 'success');
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            this.showNotification('Chyba', 'Nepodarilo sa vygenerovať PDF', 'error');
+        }
+    }
+
+    // Export to CSV
+    exportToCSV(data, filename, headers) {
+        const csvContent = [
+            headers.join(';'),
+            ...data.map(row => headers.map(h => row[h] || '').join(';'))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename + '-' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+
+        this.showNotification('Export CSV', 'Dáta boli exportované do CSV súboru.', 'success');
+    }
+
+    // Export invoices to CSV
+    exportInvoicesCSV() {
+        const headers = ['number', 'date', 'dueDate', 'clientName', 'base', 'vat', 'total', 'status'];
+        const data = this.filteredInvoices.length > 0 ? this.filteredInvoices : this.mockInvoices;
+        this.exportToCSV(data, 'faktury', headers);
+    }
+
+    // Export clients to CSV
+    exportClientsCSV() {
+        const headers = ['name', 'ico', 'dic', 'icdph', 'email', 'address', 'iban', 'invoiceCount', 'totalRevenue'];
+        this.exportToCSV(this.mockClients, 'klienti', headers);
+    }
+
+    // Export products to CSV
+    exportProductsCSV() {
+        const headers = ['name', 'category', 'unit', 'price', 'vat'];
+        this.exportToCSV(this.mockProducts, 'produkty', headers);
     }
 
     // Print PDF
