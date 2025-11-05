@@ -243,6 +243,7 @@ class InvoiceSystem {
         this.initEmailFunctions();
         this.updateDashboard();
         this.initKeyboardShortcuts();
+        this.initBulkDelete();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -2277,12 +2278,13 @@ class InvoiceSystem {
         if (!tbody) return;
 
         if (this.mockClients.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Žiadni klienti neboli nájdení</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">Žiadni klienti neboli nájdení</td></tr>';
             return;
         }
 
         tbody.innerHTML = this.mockClients.map(client => `
             <tr>
+                <td><input type="checkbox" class="client-checkbox" data-id="${client.id}"></td>
                 <td><strong>${client.name}</strong></td>
                 <td>${client.ico}</td>
                 <td>${client.icdph}</td>
@@ -2294,6 +2296,9 @@ class InvoiceSystem {
                 </td>
             </tr>
         `).join('');
+
+        // Add event listeners for checkboxes
+        this.updateBulkDeleteButton('clients');
     }
 
     // Render products table
@@ -2304,7 +2309,7 @@ class InvoiceSystem {
         const productsToRender = products || this.mockProducts;
 
         if (productsToRender.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">Žiadne produkty neboli nájdené</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;">Žiadne produkty neboli nájdené</td></tr>';
             return;
         }
 
@@ -2313,6 +2318,7 @@ class InvoiceSystem {
             const categoryLabel = product.category === 'service' ? 'Služba' : 'Tovar';
             return `
                 <tr>
+                    <td><input type="checkbox" class="product-checkbox" data-id="${product.id}"></td>
                     <td><strong>${product.name}</strong></td>
                     <td><span class="badge badge-info">${categoryLabel}</span></td>
                     <td>${product.unit}</td>
@@ -2327,6 +2333,9 @@ class InvoiceSystem {
                 </tr>
             `;
         }).join('');
+
+        // Add event listeners for checkboxes
+        this.updateBulkDeleteButton('products');
     }
 
     // Filter products
@@ -2359,7 +2368,7 @@ class InvoiceSystem {
         const projectsToRender = projects || this.mockProjects;
 
         if (projectsToRender.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Žiadne projekty neboli nájdené</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">Žiadne projekty neboli nájdené</td></tr>';
             return;
         }
 
@@ -2372,6 +2381,7 @@ class InvoiceSystem {
 
             return `
                 <tr>
+                    <td><input type="checkbox" class="project-checkbox" data-id="${project.id}"></td>
                     <td><strong>${project.name}</strong></td>
                     <td>${project.clientName}</td>
                     <td><span class="badge badge-${statusClass}">${statusLabel}</span></td>
@@ -2385,6 +2395,9 @@ class InvoiceSystem {
                 </tr>
             `;
         }).join('');
+
+        // Add event listeners for checkboxes
+        this.updateBulkDeleteButton('projects');
     }
 
     // Filter projects
@@ -2408,6 +2421,134 @@ class InvoiceSystem {
         });
 
         this.renderProjects(filtered);
+    }
+
+    // Update bulk delete button visibility
+    updateBulkDeleteButton(type) {
+        setTimeout(() => {
+            const checkboxes = document.querySelectorAll(`.${type}-checkbox:checked`);
+            const deleteBtn = document.getElementById(`bulkDelete${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
+            if (deleteBtn) {
+                deleteBtn.style.display = checkboxes.length > 0 ? 'inline-block' : 'none';
+            }
+        }, 50);
+    }
+
+    // Initialize bulk delete event listeners
+    initBulkDelete() {
+        // Products
+        const selectAllProducts = document.getElementById('selectAllProducts');
+        if (selectAllProducts) {
+            selectAllProducts.addEventListener('change', (e) => {
+                document.querySelectorAll('.product-checkbox').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                this.updateBulkDeleteButton('products');
+            });
+        }
+
+        const bulkDeleteProductsBtn = document.getElementById('bulkDeleteProductsBtn');
+        if (bulkDeleteProductsBtn) {
+            bulkDeleteProductsBtn.addEventListener('click', () => this.bulkDeleteProducts());
+        }
+
+        // Clients
+        const selectAllClients = document.getElementById('selectAllClients');
+        if (selectAllClients) {
+            selectAllClients.addEventListener('change', (e) => {
+                document.querySelectorAll('.client-checkbox').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                this.updateBulkDeleteButton('clients');
+            });
+        }
+
+        const bulkDeleteClientsBtn = document.getElementById('bulkDeleteClientsBtn');
+        if (bulkDeleteClientsBtn) {
+            bulkDeleteClientsBtn.addEventListener('click', () => this.bulkDeleteClients());
+        }
+
+        // Projects
+        const selectAllProjects = document.getElementById('selectAllProjects');
+        if (selectAllProjects) {
+            selectAllProjects.addEventListener('change', (e) => {
+                document.querySelectorAll('.project-checkbox').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                this.updateBulkDeleteButton('projects');
+            });
+        }
+
+        const bulkDeleteProjectsBtn = document.getElementById('bulkDeleteProjectsBtn');
+        if (bulkDeleteProjectsBtn) {
+            bulkDeleteProjectsBtn.addEventListener('click', () => this.bulkDeleteProjects());
+        }
+
+        // Add event delegation for individual checkboxes
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('product-checkbox')) {
+                this.updateBulkDeleteButton('products');
+            } else if (e.target.classList.contains('client-checkbox')) {
+                this.updateBulkDeleteButton('clients');
+            } else if (e.target.classList.contains('project-checkbox')) {
+                this.updateBulkDeleteButton('projects');
+            }
+        });
+    }
+
+    // Bulk delete products
+    bulkDeleteProducts() {
+        const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked'))
+            .map(cb => parseInt(cb.getAttribute('data-id')));
+
+        if (selectedIds.length === 0) return;
+
+        if (confirm(`Naozaj chcete zmazať ${selectedIds.length} produkt(ov)?`)) {
+            this.mockProducts = this.mockProducts.filter(p => !selectedIds.includes(p.id));
+            this.renderProducts();
+            this.showNotification('Produkty zmazané', `${selectedIds.length} produkt(ov) bolo úspešne zmazaných.`, 'success');
+
+            // Uncheck select all
+            const selectAll = document.getElementById('selectAllProducts');
+            if (selectAll) selectAll.checked = false;
+        }
+    }
+
+    // Bulk delete clients
+    bulkDeleteClients() {
+        const selectedIds = Array.from(document.querySelectorAll('.client-checkbox:checked'))
+            .map(cb => parseInt(cb.getAttribute('data-id')));
+
+        if (selectedIds.length === 0) return;
+
+        if (confirm(`Naozaj chcete zmazať ${selectedIds.length} klient(ov)?`)) {
+            this.mockClients = this.mockClients.filter(c => !selectedIds.includes(c.id));
+            this.renderClients();
+            this.updateDashboard();
+            this.showNotification('Klienti zmazaní', `${selectedIds.length} klient(ov) bolo úspešne zmazaných.`, 'success');
+
+            // Uncheck select all
+            const selectAll = document.getElementById('selectAllClients');
+            if (selectAll) selectAll.checked = false;
+        }
+    }
+
+    // Bulk delete projects
+    bulkDeleteProjects() {
+        const selectedIds = Array.from(document.querySelectorAll('.project-checkbox:checked'))
+            .map(cb => parseInt(cb.getAttribute('data-id')));
+
+        if (selectedIds.length === 0) return;
+
+        if (confirm(`Naozaj chcete zmazať ${selectedIds.length} projekt(ov)?`)) {
+            this.mockProjects = this.mockProjects.filter(p => !selectedIds.includes(p.id));
+            this.renderProjects();
+            this.showNotification('Projekty zmazané', `${selectedIds.length} projekt(ov) bolo úspešne zmazaných.`, 'success');
+
+            // Uncheck select all
+            const selectAll = document.getElementById('selectAllProjects');
+            if (selectAll) selectAll.checked = false;
+        }
     }
 
     // Apply invoice filters

@@ -466,6 +466,7 @@
             <div class="action-buttons" style="margin-bottom: 30px;">
                 <button class="btn btn-primary" data-modal="clientModal">Pridať nového klienta</button>
                 <button class="btn btn-secondary" id="exportClientsBtn">Export klientov</button>
+                <button class="btn btn-danger" id="bulkDeleteClientsBtn" style="display: none;">Zmazať označené</button>
             </div>
 
             <div class="panel">
@@ -479,6 +480,7 @@
                 <table class="table" id="clientsTable">
                     <thead>
                         <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="selectAllClients"></th>
                             <th>Názov</th>
                             <th>IČO</th>
                             <th>IČ DPH</th>
@@ -1709,6 +1711,7 @@ S pozdravom,
                     <option value="service">Služby</option>
                     <option value="goods">Tovar</option>
                 </select>
+                <button class="btn btn-danger" id="bulkDeleteProductsBtn" style="display: none; margin-left: 10px;">Zmazať označené</button>
             </div>
 
             <!-- Products Table -->
@@ -1716,6 +1719,7 @@ S pozdravom,
                 <table>
                     <thead>
                         <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="selectAllProducts"></th>
                             <th>Názov</th>
                             <th>Kategória</th>
                             <th>Jednotka</th>
@@ -1788,6 +1792,7 @@ S pozdravom,
                     <option value="completed">Dokončené</option>
                     <option value="on_hold">Pozastavené</option>
                 </select>
+                <button class="btn btn-danger" id="bulkDeleteProjectsBtn" style="display: none; margin-left: 10px;">Zmazať označené</button>
             </div>
 
             <!-- Project Stats -->
@@ -1815,6 +1820,7 @@ S pozdravom,
                 <table>
                     <thead>
                         <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="selectAllProjects"></th>
                             <th>Projekt</th>
                             <th>Klient</th>
                             <th>Stav</th>
