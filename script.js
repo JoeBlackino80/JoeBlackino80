@@ -1,4 +1,220 @@
 // Invoice System Application
+
+// IndexedDB Database Wrapper
+class InvoiceDB {
+    constructor() {
+        this.dbName = 'InvoiceSystemDB';
+        this.version = 1;
+        this.db = null;
+    }
+
+    // Initialize database with object stores
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.version);
+
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+
+                // Create object stores if they don't exist
+                const storeNames = ['companies', 'clients', 'products', 'projects', 'invoices', 'offers', 'proformas', 'settings'];
+
+                storeNames.forEach(storeName => {
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                        // Add indexes for common queries
+                        if (storeName === 'invoices') {
+                            store.createIndex('number', 'number', { unique: true });
+                            store.createIndex('clientId', 'clientId', { unique: false });
+                            store.createIndex('status', 'status', { unique: false });
+                        } else if (storeName === 'clients') {
+                            store.createIndex('ico', 'ico', { unique: false });
+                        }
+                    }
+                });
+
+                console.log('IndexedDB object stores created');
+            };
+        });
+    }
+
+    // Generic method to save data to a store
+    async saveData(storeName, data) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.put(data);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Generic method to get all data from a store
+    async getAllData(storeName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Get data by ID
+    async getData(storeName, id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.get(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Delete data by ID
+    async deleteData(storeName, id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Clear all data from a store
+    async clearStore(storeName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.clear();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Migrate data from localStorage to IndexedDB
+    async migrateFromLocalStorage() {
+        try {
+            // Migrate companies
+            const companies = localStorage.getItem('invoiceSystemCompanies');
+            if (companies) {
+                const companiesArray = JSON.parse(companies);
+                for (const company of companiesArray) {
+                    await this.saveData('companies', company);
+                }
+                console.log('Migrated', companiesArray.length, 'companies to IndexedDB');
+            }
+
+            // Migrate settings
+            const currentCompanyId = localStorage.getItem('currentCompanyId');
+            if (currentCompanyId) {
+                await this.saveData('settings', { id: 'currentCompanyId', value: currentCompanyId });
+            }
+
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode) {
+                await this.saveData('settings', { id: 'darkMode', value: darkMode });
+            }
+
+            const language = localStorage.getItem('language');
+            if (language) {
+                await this.saveData('settings', { id: 'language', value: language });
+            }
+
+            console.log('Migration from localStorage complete');
+        } catch (error) {
+            console.error('Migration error:', error);
+            throw error;
+        }
+    }
+
+    // Save companies (batch operation)
+    async saveCompanies(companies) {
+        try {
+            await this.clearStore('companies');
+            for (const company of companies) {
+                await this.saveData('companies', company);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error saving companies:', error);
+            return false;
+        }
+    }
+
+    // Get all companies
+    async getCompanies() {
+        try {
+            return await this.getAllData('companies');
+        } catch (error) {
+            console.error('Error loading companies:', error);
+            return [];
+        }
+    }
+
+    // Get setting by key
+    async getSetting(key) {
+        try {
+            const setting = await this.getData('settings', key);
+            return setting ? setting.value : null;
+        } catch (error) {
+            console.error('Error loading setting:', error);
+            return null;
+        }
+    }
+
+    // Save setting
+    async saveSetting(key, value) {
+        try {
+            await this.saveData('settings', { id: key, value: value });
+            return true;
+        } catch (error) {
+            console.error('Error saving setting:', error);
+            return false;
+        }
+    }
+}
+
+// Initialize global database instance
+window.invoiceDB = new InvoiceDB();
+
 class InvoiceSystem {
     constructor() {
         this.currentPage = 'dashboard';
@@ -81,10 +297,37 @@ class InvoiceSystem {
         }
     }
 
-    // Save companies to localStorage
+    // Load companies from IndexedDB
+    async loadCompaniesFromDB() {
+        try {
+            const companies = await window.invoiceDB.getCompanies();
+            if (companies && companies.length > 0) {
+                this.companies = companies;
+                console.log('Loaded', companies.length, 'companies from IndexedDB');
+            }
+
+            // Also load current company ID from IndexedDB
+            const companyId = await window.invoiceDB.getSetting('currentCompanyId');
+            if (companyId) {
+                this.currentCompanyId = parseInt(companyId);
+            }
+        } catch (error) {
+            console.error('Error loading from IndexedDB:', error);
+        }
+    }
+
+    // Save companies to localStorage and IndexedDB
     saveCompanies() {
+        // Save to localStorage as fallback
         localStorage.setItem('invoiceSystemCompanies', JSON.stringify(this.companies));
         console.log('Companies saved to localStorage:', this.companies.length);
+
+        // Auto-save to IndexedDB if available
+        if (window.invoiceDB && window.invoiceDB.db) {
+            window.invoiceDB.saveCompanies(this.companies)
+                .then(() => console.log('Companies auto-saved to IndexedDB'))
+                .catch(err => console.error('Auto-save error:', err));
+        }
     }
 
     // Get current company ID from localStorage or default to first company
@@ -103,6 +346,12 @@ class InvoiceSystem {
     // Set current company ID
     setCurrentCompanyId(companyId) {
         localStorage.setItem('currentCompanyId', companyId.toString());
+
+        // Auto-save to IndexedDB if available
+        if (window.invoiceDB && window.invoiceDB.db) {
+            window.invoiceDB.saveSetting('currentCompanyId', companyId.toString())
+                .catch(err => console.error('Error saving currentCompanyId to IndexedDB:', err));
+        }
     }
 
     // Initialize mock data
@@ -1487,6 +1736,13 @@ class InvoiceSystem {
         if (language) {
             localStorage.setItem('language', language);
             this.currentLanguage = language;
+
+            // Auto-save to IndexedDB if available
+            if (window.invoiceDB && window.invoiceDB.db) {
+                window.invoiceDB.saveSetting('language', language)
+                    .catch(err => console.error('Error saving language to IndexedDB:', err));
+            }
+
             this.showNotification(
                 t('msg.saved', language),
                 'Jazyk bol zmenený na ' + (language === 'sk' ? 'Slovenčinu' : language === 'cz' ? 'Češtinu' : 'English'),
@@ -2603,6 +2859,12 @@ class InvoiceSystem {
             localStorage.setItem('darkMode', isDark);
             darkModeToggle.textContent = isDark ? '☀️' : '🌙';
 
+            // Auto-save to IndexedDB if available
+            if (window.invoiceDB && window.invoiceDB.db) {
+                window.invoiceDB.saveSetting('darkMode', isDark.toString())
+                    .catch(err => console.error('Error saving darkMode to IndexedDB:', err));
+            }
+
             this.showNotification(
                 isDark ? 'Tmavý režim zapnutý' : 'Svetlý režim zapnutý',
                 isDark ? 'Prepli ste sa na tmavý režim' : 'Prepli ste sa na svetlý režim',
@@ -2615,24 +2877,28 @@ class InvoiceSystem {
 
     // Initialize IndexedDB
     async initDatabase() {
-        if (typeof window.db === 'undefined') {
+        if (!window.indexedDB) {
             console.warn('IndexedDB not available, using localStorage fallback');
             return;
         }
 
         try {
-            await window.db.init();
+            await window.invoiceDB.init();
             console.log('IndexedDB initialized successfully');
 
             // Migrate data from localStorage if needed
             const migrated = localStorage.getItem('dbMigrated');
             if (!migrated) {
-                await window.db.migrateFromLocalStorage();
+                await window.invoiceDB.migrateFromLocalStorage();
                 localStorage.setItem('dbMigrated', 'true');
                 console.log('Data migrated to IndexedDB');
             }
+
+            // Load companies from IndexedDB
+            await this.loadCompaniesFromDB();
         } catch (error) {
             console.error('Failed to initialize IndexedDB:', error);
+            console.log('Falling back to localStorage');
         }
     }
 
