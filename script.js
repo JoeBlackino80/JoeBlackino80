@@ -636,12 +636,18 @@ class InvoiceSystem {
 
     // Initialize validation
     initValidation() {
-        // Slovak ICO validation (8 digits)
+        // Slovak ICO validation with checksum (8 digits + modulo 11 check)
         document.querySelectorAll('input[name="ico"]').forEach(input => {
             input.addEventListener('blur', (e) => {
                 const value = e.target.value;
-                if (value && !/^\d{8}$/.test(value)) {
-                    this.showValidationError(e.target, 'IČO musí obsahovať 8 číslic');
+                if (value) {
+                    if (!/^\d{8}$/.test(value)) {
+                        this.showValidationError(e.target, 'IČO musí obsahovať 8 číslic');
+                    } else if (!this.validateIcoChecksum(value)) {
+                        this.showValidationError(e.target, 'IČO má nesprávny kontrolný súčet');
+                    } else {
+                        this.clearValidationError(e.target);
+                    }
                 } else {
                     this.clearValidationError(e.target);
                 }
@@ -672,12 +678,18 @@ class InvoiceSystem {
             });
         });
 
-        // Slovak IBAN validation (SK + 22 digits)
+        // Slovak IBAN validation with checksum (SK + 22 digits + modulo 97 check)
         document.querySelectorAll('input[name="iban"]').forEach(input => {
             input.addEventListener('blur', (e) => {
                 const value = e.target.value;
-                if (value && !/^SK\d{22}$/.test(value)) {
-                    this.showValidationError(e.target, 'IBAN musí byť vo formáte SK + 22 číslic');
+                if (value) {
+                    if (!/^SK\d{22}$/.test(value)) {
+                        this.showValidationError(e.target, 'IBAN musí byť vo formáte SK + 22 číslic');
+                    } else if (!this.validateIbanChecksum(value)) {
+                        this.showValidationError(e.target, 'IBAN má nesprávny kontrolný súčet');
+                    } else {
+                        this.clearValidationError(e.target);
+                    }
                 } else {
                     this.clearValidationError(e.target);
                 }
@@ -719,6 +731,58 @@ class InvoiceSystem {
         if (errorEl) {
             errorEl.remove();
         }
+    }
+
+    // Validate Slovak IČO checksum using modulo 11 algorithm
+    validateIcoChecksum(ico) {
+        if (!/^\d{8}$/.test(ico)) return false;
+
+        // IČO checksum algorithm: weighted sum modulo 11
+        const weights = [8, 7, 6, 5, 4, 3, 2];
+        let sum = 0;
+
+        for (let i = 0; i < 7; i++) {
+            sum += parseInt(ico[i]) * weights[i];
+        }
+
+        const remainder = sum % 11;
+        let checkDigit;
+
+        if (remainder === 0) {
+            checkDigit = 1;
+        } else if (remainder === 1) {
+            checkDigit = 0;
+        } else {
+            checkDigit = 11 - remainder;
+        }
+
+        return parseInt(ico[7]) === checkDigit;
+    }
+
+    // Validate IBAN checksum using modulo 97 algorithm
+    validateIbanChecksum(iban) {
+        if (!/^[A-Z]{2}\d{22,}$/.test(iban)) return false;
+
+        // Move first 4 characters to the end
+        const rearranged = iban.substring(4) + iban.substring(0, 4);
+
+        // Replace letters with numbers (A=10, B=11, ..., Z=35)
+        let numericString = '';
+        for (let char of rearranged) {
+            if (char >= 'A' && char <= 'Z') {
+                numericString += (char.charCodeAt(0) - 55).toString();
+            } else {
+                numericString += char;
+            }
+        }
+
+        // Calculate modulo 97 on the large number
+        let remainder = 0;
+        for (let i = 0; i < numericString.length; i++) {
+            remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
+        }
+
+        return remainder === 1;
     }
 
     // Modal functions
