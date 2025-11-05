@@ -246,6 +246,7 @@ class InvoiceSystem {
         this.initBulkDelete();
         this.initInvoiceCalculator();
         this.initPageStatistics();
+        this.initCSVImport();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -2804,6 +2805,166 @@ class InvoiceSystem {
         document.getElementById('productsStatServices').textContent = services;
         document.getElementById('productsStatGoods').textContent = goods;
         document.getElementById('productsStatAvgPrice').textContent = '€' + avgPrice.toFixed(2);
+    }
+
+    // Initialize CSV import functionality
+    initCSVImport() {
+        const importClientsFile = document.getElementById('importClientsFile');
+        if (importClientsFile) {
+            importClientsFile.addEventListener('change', (e) => this.handleClientCSVImport(e));
+        }
+
+        const importProductsFile = document.getElementById('importProductsFile');
+        if (importProductsFile) {
+            importProductsFile.addEventListener('change', (e) => this.handleProductCSVImport(e));
+        }
+    }
+
+    // Handle client CSV import
+    handleClientCSVImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csvContent = e.target.result;
+                const clients = this.parseClientCSV(csvContent);
+
+                if (clients.length === 0) {
+                    this.showNotification('Chyba', 'CSV súbor neobsahuje žiadne platné dáta', 'error');
+                    return;
+                }
+
+                // Add clients to the system
+                let importCount = 0;
+                clients.forEach(client => {
+                    const newClient = {
+                        id: Math.max(...this.mockClients.map(c => c.id), 0) + 1 + importCount,
+                        name: client.name || 'Nový klient',
+                        ico: client.ico || '',
+                        dic: client.dic || '',
+                        icdph: client.icdph || '',
+                        email: client.email || '',
+                        address: client.address || '',
+                        iban: client.iban || '',
+                        invoiceCount: parseInt(client.invoiceCount) || 0,
+                        totalRevenue: parseFloat(client.totalRevenue) || 0
+                    };
+
+                    this.mockClients.push(newClient);
+                    importCount++;
+                });
+
+                this.renderClients();
+                this.updateClientStatistics();
+                this.updateDashboard();
+                this.showNotification('Import úspešný', `Importovaných ${importCount} klientov z CSV`, 'success');
+
+                // Reset file input
+                event.target.value = '';
+            } catch (error) {
+                console.error('CSV import error:', error);
+                this.showNotification('Chyba', 'Nepodarilo sa importovať CSV súbor: ' + error.message, 'error');
+            }
+        };
+
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    // Parse client CSV
+    parseClientCSV(csvContent) {
+        const lines = csvContent.split('\n').filter(line => line.trim());
+        if (lines.length < 2) return [];
+
+        const headers = lines[0].split(';').map(h => h.trim().replace(/["\uFEFF]/g, ''));
+        const clients = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(';').map(v => v.trim().replace(/["\uFEFF]/g, ''));
+            const client = {};
+
+            headers.forEach((header, index) => {
+                client[header] = values[index] || '';
+            });
+
+            if (client.name) {
+                clients.push(client);
+            }
+        }
+
+        return clients;
+    }
+
+    // Handle product CSV import
+    handleProductCSVImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csvContent = e.target.result;
+                const products = this.parseProductCSV(csvContent);
+
+                if (products.length === 0) {
+                    this.showNotification('Chyba', 'CSV súbor neobsahuje žiadne platné dáta', 'error');
+                    return;
+                }
+
+                // Add products to the system
+                let importCount = 0;
+                products.forEach(product => {
+                    const newProduct = {
+                        id: Math.max(...this.mockProducts.map(p => p.id), 0) + 1 + importCount,
+                        name: product.name || 'Nový produkt',
+                        category: product.category || 'service',
+                        unit: product.unit || 'ks',
+                        price: parseFloat(product.price) || 0,
+                        vat: parseInt(product.vat) || 20
+                    };
+
+                    this.mockProducts.push(newProduct);
+                    importCount++;
+                });
+
+                this.renderProducts();
+                this.updateProductStatistics();
+                this.showNotification('Import úspešný', `Importovaných ${importCount} produktov z CSV`, 'success');
+
+                // Reset file input
+                event.target.value = '';
+            } catch (error) {
+                console.error('CSV import error:', error);
+                this.showNotification('Chyba', 'Nepodarilo sa importovať CSV súbor: ' + error.message, 'error');
+            }
+        };
+
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    // Parse product CSV
+    parseProductCSV(csvContent) {
+        const lines = csvContent.split('\n').filter(line => line.trim());
+        if (lines.length < 2) return [];
+
+        const headers = lines[0].split(';').map(h => h.trim().replace(/["\uFEFF]/g, ''));
+        const products = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(';').map(v => v.trim().replace(/["\uFEFF]/g, ''));
+            const product = {};
+
+            headers.forEach((header, index) => {
+                product[header] = values[index] || '';
+            });
+
+            if (product.name) {
+                products.push(product);
+            }
+        }
+
+        return products;
     }
 
     // Apply invoice filters

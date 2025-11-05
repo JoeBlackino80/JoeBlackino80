@@ -466,6 +466,10 @@
             <div class="action-buttons" style="margin-bottom: 30px;">
                 <button class="btn btn-primary" data-modal="clientModal">Pridať nového klienta</button>
                 <button class="btn btn-secondary" id="exportClientsBtn">Export klientov</button>
+                <label class="btn btn-secondary" style="cursor: pointer;">
+                    Import CSV
+                    <input type="file" id="importClientsFile" accept=".csv" style="display: none;">
+                </label>
                 <button class="btn btn-danger" id="bulkDeleteClientsBtn" style="display: none;">Zmazať označené</button>
             </div>
 
@@ -1737,6 +1741,10 @@ S pozdravom,
                     <option value="service">Služby</option>
                     <option value="goods">Tovar</option>
                 </select>
+                <label class="btn btn-secondary" style="cursor: pointer; margin-left: 10px;">
+                    Import CSV
+                    <input type="file" id="importProductsFile" accept=".csv" style="display: none;">
+                </label>
                 <button class="btn btn-danger" id="bulkDeleteProductsBtn" style="display: none; margin-left: 10px;">Zmazať označené</button>
             </div>
 
