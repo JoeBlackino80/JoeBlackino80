@@ -244,6 +244,7 @@ class InvoiceSystem {
         this.updateDashboard();
         this.initKeyboardShortcuts();
         this.initBulkDelete();
+        this.initInvoiceCalculator();
 
         console.log('Fakturačný systém inicializovaný');
         console.log('API Dokumentácia: faktury-api-spec.yaml');
@@ -2549,6 +2550,147 @@ class InvoiceSystem {
             const selectAll = document.getElementById('selectAllProjects');
             if (selectAll) selectAll.checked = false;
         }
+    }
+
+    // Initialize live invoice calculator
+    initInvoiceCalculator() {
+        const invoiceItemsContainer = document.getElementById('invoiceItems');
+        if (!invoiceItemsContainer) return;
+
+        // Add event delegation for item row changes
+        invoiceItemsContainer.addEventListener('input', (e) => {
+            if (e.target.matches('input[name="quantity[]"], input[name="price[]"]') ||
+                e.target.matches('select[name="vat[]"]')) {
+                const row = e.target.closest('.item-row');
+                this.calculateItemTotal(row);
+                this.updateInvoiceTotals();
+            }
+        });
+
+        // Auto-populate price when product is selected
+        invoiceItemsContainer.addEventListener('change', (e) => {
+            if (e.target.matches('select[name="item[]"]')) {
+                const row = e.target.closest('.item-row');
+                this.autoPopulatePrice(row, e.target.value);
+            }
+        });
+
+        // Add item button
+        const addItemBtn = document.getElementById('addItemBtn');
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', () => this.addInvoiceItem());
+        }
+
+        // Remove item delegation
+        invoiceItemsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item')) {
+                const row = e.target.closest('.item-row');
+                if (invoiceItemsContainer.querySelectorAll('.item-row').length > 1) {
+                    row.remove();
+                    this.updateInvoiceTotals();
+                } else {
+                    this.showNotification('Upozornenie', 'Faktúra musí obsahovať aspoň jednu položku', 'warning');
+                }
+            }
+        });
+
+        // Calculate initial totals
+        this.updateInvoiceTotals();
+    }
+
+    // Calculate total for a single item row
+    calculateItemTotal(row) {
+        const quantity = parseFloat(row.querySelector('input[name="quantity[]"]')?.value) || 0;
+        const price = parseFloat(row.querySelector('input[name="price[]"]')?.value) || 0;
+        const vat = parseFloat(row.querySelector('select[name="vat[]"]')?.value) || 0;
+
+        const subtotal = quantity * price;
+        const vatAmount = subtotal * (vat / 100);
+        const total = subtotal + vatAmount;
+
+        const totalField = row.querySelector('.item-total');
+        if (totalField) {
+            totalField.value = total.toFixed(2) + ' €';
+        }
+    }
+
+    // Auto-populate price from product database
+    autoPopulatePrice(row, productName) {
+        const product = this.mockProducts.find(p => p.name === productName);
+        if (product) {
+            const priceInput = row.querySelector('input[name="price[]"]');
+            const vatSelect = row.querySelector('select[name="vat[]"]');
+
+            if (priceInput) priceInput.value = product.price.toFixed(2);
+            if (vatSelect) vatSelect.value = product.vat.toString();
+
+            this.calculateItemTotal(row);
+            this.updateInvoiceTotals();
+        }
+    }
+
+    // Update invoice summary totals
+    updateInvoiceTotals() {
+        const rows = document.querySelectorAll('#invoiceItems .item-row');
+        let totalWithoutVat = 0;
+        let totalVat = 0;
+
+        rows.forEach(row => {
+            const quantity = parseFloat(row.querySelector('input[name="quantity[]"]')?.value) || 0;
+            const price = parseFloat(row.querySelector('input[name="price[]"]')?.value) || 0;
+            const vat = parseFloat(row.querySelector('select[name="vat[]"]')?.value) || 0;
+
+            const subtotal = quantity * price;
+            const vatAmount = subtotal * (vat / 100);
+
+            totalWithoutVat += subtotal;
+            totalVat += vatAmount;
+        });
+
+        const totalWithVat = totalWithoutVat + totalVat;
+
+        // Update summary display
+        const totalWithoutVatEl = document.getElementById('totalWithoutVat');
+        const totalVatEl = document.getElementById('totalVat');
+        const totalWithVatEl = document.getElementById('totalWithVat');
+
+        if (totalWithoutVatEl) totalWithoutVatEl.textContent = '€' + totalWithoutVat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        if (totalVatEl) totalVatEl.textContent = '€' + totalVat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        if (totalWithVatEl) totalWithVatEl.textContent = '€' + totalWithVat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // Add new invoice item row
+    addInvoiceItem() {
+        const invoiceItemsContainer = document.getElementById('invoiceItems');
+        if (!invoiceItemsContainer) return;
+
+        const newRow = document.createElement('div');
+        newRow.className = 'item-row';
+
+        // Build product options from mockProducts
+        const productOptions = this.mockProducts.map(p =>
+            `<option value="${p.name}">${p.name}</option>`
+        ).join('');
+
+        newRow.innerHTML = `
+            <select name="item[]">
+                <option value="">Vyberte produkt...</option>
+                ${productOptions}
+            </select>
+            <input type="number" name="quantity[]" placeholder="Množstvo" value="1" min="0">
+            <input type="number" name="price[]" placeholder="Cena/j" value="0.00" step="0.01" min="0">
+            <select name="vat[]">
+                <option value="20">20% DPH</option>
+                <option value="10">10% DPH</option>
+                <option value="0">0% DPH</option>
+            </select>
+            <input type="text" class="item-total" readonly value="0.00 €">
+            <button type="button" class="btn btn-danger btn-small remove-item">Odstrániť</button>
+        `;
+
+        invoiceItemsContainer.appendChild(newRow);
+        this.calculateItemTotal(newRow);
+        this.updateInvoiceTotals();
     }
 
     // Apply invoice filters
