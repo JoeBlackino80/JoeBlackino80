@@ -4,12 +4,19 @@
 
 **Všetky kritické chyby boli opravené!**
 
-### Opravené problémy:
+### Opravené problémy (Commit 95627a0):
 1. ✅ Export tlačidlá pre klientov a produkty teraz fungujú
 2. ✅ `handleExport()` funkcia volá skutočné CSV export funkcie
 3. ✅ Charts sa inicializujú správne (pri navigácii, nie v konštruktore)
 4. ✅ Pridané tlačidlo "Export CSV" pre produkty
 5. ✅ Pridaná funkcia `exportBackup()` pre kompletnú zálohu dát
+
+### Opravené problémy (Aktuálny commit):
+6. ✅ **KRITICKÝ KONFLIKT** - Odstránené duplicitné database.js a translations.js
+7. ✅ Vyriešený konflikt medzi DatabaseManager a InvoiceDB triedami
+8. ✅ Aplikácia teraz používa len jednu databázovú implementáciu
+
+**📄 Detailná správa: OPRAVY_KRITICKYCH_CHYB.md**
 
 ---
 
