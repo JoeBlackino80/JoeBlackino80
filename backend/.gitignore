@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment variables (NIKDY NEnahrávať!)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test coverage
+coverage/
+
+# Build
+dist/
+build/
